@@ -53,9 +53,8 @@ export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () 
   }
 
   return (
-    <div className="mx-auto w-full mt-10 max-w-md p-6">
+    <div className="mx-auto mt-10 w-full max-w-md p-6">
       <h1 className="mb-6 text-center text-3xl font-bold">Welcome Back</h1>
-
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -112,11 +111,7 @@ export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () 
 
         <form.Subscribe>
           {(state) => (
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={!state.canSubmit || state.isSubmitting}
-            >
+            <Button type="submit" className="w-full" disabled={!state.canSubmit || state.isSubmitting}>
               {state.isSubmitting ? "Submitting..." : "Sign In"}
             </Button>
           )}
@@ -124,11 +119,7 @@ export default function SignInForm({ onSwitchToSignUp }: { onSwitchToSignUp: () 
       </form>
 
       <div className="mt-4 text-center">
-        <Button
-          variant="link"
-          onClick={onSwitchToSignUp}
-          className="text-indigo-600 hover:text-indigo-800"
-        >
+        <Button variant="link" onClick={onSwitchToSignUp} className="text-indigo-600 hover:text-indigo-800">
           Need an account? Sign Up
         </Button>
       </div>

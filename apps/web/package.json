@@ -11,7 +11,7 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "@base-ui/react": "^1.0.0",
+    "@base-ui/react": "^1.1.0",
     "@digisign/api": "workspace:*",
     "@digisign/auth": "workspace:*",
     "@digisign/env": "workspace:*",

@@ -1,7 +1,3 @@
-import { createContext } from "@digisign/api/context";
-import { appRouter } from "@digisign/api/routers/index";
-import { auth } from "@digisign/auth";
-import { env } from "@digisign/env/server";
 import { cors } from "@elysiajs/cors";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins";
@@ -10,6 +6,11 @@ import { RPCHandler } from "@orpc/server/fetch";
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
 import { Elysia } from "elysia";
 
+import { createContext } from "@digisign/api/context";
+import { appRouter } from "@digisign/api/routers/index";
+import { auth } from "@digisign/auth";
+import { env } from "@digisign/env/server";
+
 const rpcHandler = new RPCHandler(appRouter, {
   interceptors: [
     onError((error) => {
@@ -17,6 +18,7 @@ const rpcHandler = new RPCHandler(appRouter, {
     }),
   ],
 });
+
 const apiHandler = new OpenAPIHandler(appRouter, {
   plugins: [
     new OpenAPIReferencePlugin({
@@ -47,20 +49,31 @@ const app = new Elysia()
     return status(405);
   })
   .all("/rpc*", async (context) => {
-    const { response } = await rpcHandler.handle(context.request, {
-      prefix: "/rpc",
-      context: await createContext({ context }),
-    });
-    return response ?? new Response("Not Found", { status: 404 });
+    const { response } = await rpcHandler.handle(
+      context.request,
+      {
+        prefix: "/rpc",
+        context: await createContext({ context }),
+      },
+    );
+    return (
+      response ?? new Response("Not Found", { status: 404 })
+    );
   })
   .all("/api*", async (context) => {
-    const { response } = await apiHandler.handle(context.request, {
-      prefix: "/api-reference",
-      context: await createContext({ context }),
-    });
-    return response ?? new Response("Not Found", { status: 404 });
+    const { response } = await apiHandler.handle(
+      context.request,
+      {
+        prefix: "/api-reference",
+        context: await createContext({ context }),
+      },
+    );
+    return (
+      response ?? new Response("Not Found", { status: 404 })
+    );
   })
-  .get("/", () => "OK")
-  .listen(3000, () => {
-    console.log("Server is running on http://localhost:3000");
-  });
+  .get("/", () => "OK");
+
+app.listen(3000, () => {
+  console.log("Server is running on http://localhost:3000");
+});

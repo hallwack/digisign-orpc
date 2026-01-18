@@ -1,0 +1,55 @@
+name: digisign
+
+services:
+  backend:
+    container_name: digisign-backend
+    build:
+      context: .
+      dockerfile: ./apps/server/Dockerfile
+    env_file: ./.env
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - digisign-network
+
+  frontend:
+    container_name: digisign-frontend
+    build:
+      context: .
+      dockerfile: ./apps/web/Dockerfile
+    env_file: ./.env
+    ports:
+      - "4173:4173"
+    depends_on:
+      - backend
+    networks:
+      - digisign-network
+
+  db:
+    image: postgres
+    container_name: digisign-postgres
+    env_file: ./.env
+    environment:
+      POSTGRES_DB: digisign-orpc
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - digisign-postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+networks:
+  digisign-network:
+    driver: bridge
+
+volumes:
+  digisign-postgres_data:

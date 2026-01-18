@@ -1,5 +1,17 @@
 {
   "name": "@digisign/config",
   "version": "0.0.0",
-  "private": true
+  "private": true,
+  "type": "module",
+  "exports": {
+		"./prettier": {
+			"types": "./prettier.config.d.ts",
+			"default": "./prettier.config.js"
+		},
+		"./tsconfig.base.json": "./tsconfig.base.json"
+	},
+	"devDependencies": {
+		"prettier": "^3.7.4"
+	}
+
 }

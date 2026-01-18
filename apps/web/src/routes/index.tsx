@@ -24,11 +24,15 @@ const TITLE_TEXT = `
  `;
 
 function HomeComponent() {
-  const healthCheck = useQuery(orpc.healthCheck.queryOptions());
+  const healthCheck = useQuery(
+    orpc.healthCheck.queryOptions(),
+  );
 
   return (
     <div className="container mx-auto max-w-3xl px-4 py-2">
-      <pre className="overflow-x-auto font-mono text-sm">{TITLE_TEXT}</pre>
+      <pre className="overflow-x-auto font-mono text-sm">
+        {TITLE_TEXT}
+      </pre>
       <div className="grid gap-6">
         <section className="rounded-lg border p-4">
           <h2 className="mb-2 font-medium">API Status</h2>
@@ -36,7 +40,7 @@ function HomeComponent() {
             <div
               className={`h-2 w-2 rounded-full ${healthCheck.data ? "bg-green-500" : "bg-red-500"}`}
             />
-            <span className="text-sm text-muted-foreground">
+            <span className="text-muted-foreground text-sm">
               {healthCheck.isLoading
                 ? "Checking..."
                 : healthCheck.data
