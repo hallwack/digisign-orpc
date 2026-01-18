@@ -1,0 +1,24 @@
+{
+  "name": "@digisign/auth",
+  "type": "module",
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {},
+  "dependencies": {
+    "@digisign/db": "workspace:*",
+    "@digisign/env": "workspace:*",
+    "better-auth": "catalog:",
+    "dotenv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@digisign/config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}

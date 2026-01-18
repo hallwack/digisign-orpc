@@ -1,0 +1,3 @@
+{
+  "extends": "@digisign/config/tsconfig.base.json"
+}
