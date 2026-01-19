@@ -49,30 +49,25 @@ const app = new Elysia()
     return status(405);
   })
   .all("/rpc*", async (context) => {
-    const { response } = await rpcHandler.handle(
-      context.request,
-      {
-        prefix: "/rpc",
-        context: await createContext({ context }),
-      },
-    );
-    return (
-      response ?? new Response("Not Found", { status: 404 })
-    );
+    const { response } = await rpcHandler.handle(context.request, {
+      prefix: "/rpc",
+      context: await createContext({ context }),
+    });
+    return response ?? new Response("Not Found", { status: 404 });
   })
   .all("/api*", async (context) => {
-    const { response } = await apiHandler.handle(
-      context.request,
-      {
-        prefix: "/api-reference",
-        context: await createContext({ context }),
-      },
-    );
-    return (
-      response ?? new Response("Not Found", { status: 404 })
-    );
+    const { response } = await apiHandler.handle(context.request, {
+      prefix: "/api",
+      context: await createContext({ context }),
+    });
+    return response ?? new Response("Not Found", { status: 404 });
   })
   .get("/", () => "OK");
+
+  console.log("Route list:");
+  app.routes.forEach((route) => {
+    console.log(`${route.method} ${route.path}`);
+  });
 
 app.listen(3000, () => {
   console.log("Server is running on http://localhost:3000");
