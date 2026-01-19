@@ -1,11 +1,9 @@
 import type { RouterClient } from "@orpc/server";
 
-import {
-  protectedProcedure,
-  publicProcedure,
-} from "../index";
+import { protectedProcedure, publicProcedure } from "../index";
+import { documentRouter } from "./document";
 
-export const appRouter = {
+const otherRouter = {
   healthCheck: publicProcedure.handler(() => {
     return "OK";
   }),
@@ -17,7 +15,10 @@ export const appRouter = {
   }),
 };
 
+export const appRouter = {
+  ...otherRouter,
+  document: documentRouter,
+};
+
 export type AppRouter = typeof appRouter;
-export type AppRouterClient = RouterClient<
-  typeof appRouter
->;
+export type AppRouterClient = RouterClient<typeof appRouter>;
