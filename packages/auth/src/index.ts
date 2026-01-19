@@ -1,13 +1,13 @@
-import { db } from "@digisign/db";
-import * as schema from "@digisign/db/schema/auth";
-import { env } from "@digisign/env/server";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+
+import { db } from "@digisign/db";
+import * as schema from "@digisign/db/tables/auth";
+import { env } from "@digisign/env/server";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
-
     schema: schema,
   }),
   trustedOrigins: [env.CORS_ORIGIN],
