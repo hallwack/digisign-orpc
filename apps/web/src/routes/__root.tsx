@@ -8,7 +8,6 @@ import { useState } from "react";
 
 import type { AppRouterClient } from "@digisign/api/routers/index";
 
-import Header from "@/components/header";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { link, orpc } from "@/utils/orpc";
@@ -43,16 +42,12 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
 
 function RootComponent() {
   const [client] = useState<AppRouterClient>(() => createORPCClient(link));
-  const [orpcUtils] = useState(() => createTanstackQueryUtils(client));
 
   return (
     <>
       <HeadContent />
       <ThemeProvider attribute="class" defaultTheme="dark" disableTransitionOnChange storageKey="vite-ui-theme">
-        <div className="grid h-svh grid-rows-[auto_1fr]">
-          <Header />
           <Outlet />
-        </div>
         <Toaster richColors />
       </ThemeProvider>
       <TanStackRouterDevtools position="bottom-left" />
