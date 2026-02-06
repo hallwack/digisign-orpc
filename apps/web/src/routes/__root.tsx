@@ -1,15 +1,12 @@
-import type { AppRouterClient } from "@digisign/api/routers/index";
 import { createORPCClient } from "@orpc/client";
 import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import type { QueryClient } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import {
-  HeadContent,
-  Outlet,
-  createRootRouteWithContext,
-} from "@tanstack/react-router";
+import { HeadContent, Outlet, createRootRouteWithContext } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { useState } from "react";
+
+import type { AppRouterClient } from "@digisign/api/routers/index";
 
 import Header from "@/components/header";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -23,45 +20,35 @@ export interface RouterAppContext {
   queryClient: QueryClient;
 }
 
-export const Route =
-  createRootRouteWithContext<RouterAppContext>()({
-    component: RootComponent,
-    head: () => ({
-      meta: [
-        {
-          title: "digisign",
-        },
-        {
-          name: "description",
-          content: "digisign is a web application",
-        },
-      ],
-      links: [
-        {
-          rel: "icon",
-          href: "/favicon.ico",
-        },
-      ],
-    }),
-  });
+export const Route = createRootRouteWithContext<RouterAppContext>()({
+  component: RootComponent,
+  head: () => ({
+    meta: [
+      {
+        title: "digisign",
+      },
+      {
+        name: "description",
+        content: "digisign is a web application",
+      },
+    ],
+    links: [
+      {
+        rel: "icon",
+        href: "/favicon.ico",
+      },
+    ],
+  }),
+});
 
 function RootComponent() {
-  const [client] = useState<AppRouterClient>(() =>
-    createORPCClient(link),
-  );
-  const [orpcUtils] = useState(() =>
-    createTanstackQueryUtils(client),
-  );
+  const [client] = useState<AppRouterClient>(() => createORPCClient(link));
+  const [orpcUtils] = useState(() => createTanstackQueryUtils(client));
 
   return (
     <>
       <HeadContent />
-      <ThemeProvider
-        attribute="class"
-        defaultTheme="dark"
-        disableTransitionOnChange
-        storageKey="vite-ui-theme"
-      >
+      <ThemeProvider attribute="class" defaultTheme="dark" disableTransitionOnChange storageKey="vite-ui-theme">
         <div className="grid h-svh grid-rows-[auto_1fr]">
           <Header />
           <Outlet />
@@ -69,10 +56,7 @@ function RootComponent() {
         <Toaster richColors />
       </ThemeProvider>
       <TanStackRouterDevtools position="bottom-left" />
-      <ReactQueryDevtools
-        position="bottom"
-        buttonPosition="bottom-right"
-      />
+      <ReactQueryDevtools position="bottom" buttonPosition="bottom-right" />
     </>
   );
 }

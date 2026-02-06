@@ -1,54 +1,35 @@
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 
+import { Button } from "@/components/ui/button";
 import { orpc } from "@/utils/orpc";
 
 export const Route = createFileRoute("/")({
-  component: HomeComponent,
+  component: HomePageComponent,
 });
 
-const TITLE_TEXT = `
- ██████╗ ███████╗████████╗████████╗███████╗██████╗
- ██╔══██╗██╔════╝╚══██╔══╝╚══██╔══╝██╔════╝██╔══██╗
- ██████╔╝█████╗     ██║      ██║   █████╗  ██████╔╝
- ██╔══██╗██╔══╝     ██║      ██║   ██╔══╝  ██╔══██╗
- ██████╔╝███████╗   ██║      ██║   ███████╗██║  ██║
- ╚═════╝ ╚══════╝   ╚═╝      ╚═╝   ╚══════╝╚═╝  ╚═╝
-
- ████████╗    ███████╗████████╗ █████╗  ██████╗██╗  ██╗
- ╚══██╔══╝    ██╔════╝╚══██╔══╝██╔══██╗██╔════╝██║ ██╔╝
-    ██║       ███████╗   ██║   ███████║██║     █████╔╝
-    ██║       ╚════██║   ██║   ██╔══██║██║     ██╔═██╗
-    ██║       ███████║   ██║   ██║  ██║╚██████╗██║  ██╗
-    ╚═╝       ╚══════╝   ╚═╝   ╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝
- `;
-
-function HomeComponent() {
-  const healthCheck = useQuery(
-    orpc.healthCheck.queryOptions(),
-  );
+function HomePageComponent() {
+  const [count, setCount] = useState(0);
+  const healthCheck = useQuery(orpc.healthCheck.queryOptions());
 
   return (
-    <div className="container mx-auto max-w-3xl px-4 py-2">
-      <pre className="overflow-x-auto font-mono text-sm">
-        {TITLE_TEXT}
-      </pre>
-      <div className="grid gap-6">
-        <section className="rounded-lg border p-4">
-          <h2 className="mb-2 font-medium">API Status</h2>
-          <div className="flex items-center gap-2">
-            <div
-              className={`h-2 w-2 rounded-full ${healthCheck.data ? "bg-green-500" : "bg-red-500"}`}
-            />
-            <span className="text-muted-foreground text-sm">
-              {healthCheck.isLoading
-                ? "Checking..."
-                : healthCheck.data
-                  ? "Connected"
-                  : "Disconnected"}
-            </span>
-          </div>
-        </section>
+    <div className="flex min-h-screen w-screen flex-col items-center justify-center">
+      <div className="flex flex-col gap-4">
+        <h1>Vite + React + TanStack Router</h1>
+        <div className="flex gap-2">
+          <Button onClick={() => setCount((count) => count + 1)}>count is {count}</Button>
+          <Button nativeButton={false} render={<Link to="/login">Go to Login Page</Link>} />
+          {/* {session?.data && (
+            <Button onClick={handleLogout} disabled={logout.isPending}>
+              {logout.isPending ? "Logging out..." : "Log Out"}
+            </Button>
+          )} */}
+        </div>
+        <p>
+          Edit <code>src/App.tsx</code> and save to test HMR
+        </p>
+        <p className="read-the-docs">Click on the Vite and React logos to learn more</p>
       </div>
     </div>
   );
