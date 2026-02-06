@@ -132,13 +132,13 @@ export default function RegisterForm({ className, ...props }: React.ComponentPro
             </FieldGroup>
 
             <div className="flex flex-col gap-4">
-              <Button type="submit" className="w-full" disabled={isPending}>
-                Login
+              <Button disabled={isPending} type="submit" className="w-full">
+                Register
               </Button>
               <p className="text-center text-sm">
-                Don&apos;t have an account?{" "}
+                Have an account?{" "}
                 <Link to="/login" className="underline underline-offset-4">
-                  Sign up
+                  Sign in
                 </Link>
               </p>
             </div>
