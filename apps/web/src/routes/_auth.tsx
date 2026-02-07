@@ -3,7 +3,7 @@ import { Outlet, createFileRoute, redirect } from "@tanstack/react-router";
 import { authClient } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/_auth")({
-  component: AuthLayout,
+  component: AuthLayoutComponent,
   beforeLoad: async ({ search }) => {
     const { data: session } = await authClient.getSession();
 
@@ -17,7 +17,7 @@ export const Route = createFileRoute("/_auth")({
   },
 });
 
-function AuthLayout() {
+function AuthLayoutComponent() {
   const { isPending } = authClient.useSession();
 
   if (isPending) {
