@@ -1,9 +1,5 @@
 import { relations } from "drizzle-orm";
-import {
-  pgTable,
-  text,
-  timestamp,
-} from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
 import { userTable } from "./auth";
 
@@ -64,44 +60,35 @@ export const keyTable = pgTable("keys", {
   }),
 });
 
-export const keyTableRelations = relations(
-  keyTable,
-  ({ one }) => ({
-    signature: one(signatureTable, {
-      fields: [keyTable.id],
-      references: [signatureTable.keyId],
-    }),
-    user: one(userTable, {
-      fields: [keyTable.userId],
-      references: [userTable.id],
-    }),
+export const keyTableRelations = relations(keyTable, ({ one }) => ({
+  signature: one(signatureTable, {
+    fields: [keyTable.id],
+    references: [signatureTable.keyId],
   }),
-);
+  user: one(userTable, {
+    fields: [keyTable.userId],
+    references: [userTable.id],
+  }),
+}));
 
-export const documentTableRelations = relations(
-  documentTable,
-  ({ one }) => ({
-    user: one(userTable, {
-      fields: [documentTable.userId],
-      references: [userTable.id],
-    }),
-    signature: one(signatureTable, {
-      fields: [documentTable.id],
-      references: [signatureTable.documentId],
-    }),
+export const documentTableRelations = relations(documentTable, ({ one }) => ({
+  user: one(userTable, {
+    fields: [documentTable.userId],
+    references: [userTable.id],
   }),
-);
+  signature: one(signatureTable, {
+    fields: [documentTable.id],
+    references: [signatureTable.documentId],
+  }),
+}));
 
-export const signatureTableRelations = relations(
-  signatureTable,
-  ({ one }) => ({
-    document: one(documentTable, {
-      fields: [signatureTable.documentId],
-      references: [documentTable.id],
-    }),
-    key: one(keyTable, {
-      fields: [signatureTable.keyId],
-      references: [keyTable.id],
-    }),
+export const signatureTableRelations = relations(signatureTable, ({ one }) => ({
+  document: one(documentTable, {
+    fields: [signatureTable.documentId],
+    references: [documentTable.id],
   }),
-);
+  key: one(keyTable, {
+    fields: [signatureTable.keyId],
+    references: [keyTable.id],
+  }),
+}));
