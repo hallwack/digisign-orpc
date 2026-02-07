@@ -6,7 +6,7 @@ services:
     container_name: digisign-postgres
     env_file: .env
     ports:
-      - "5453:5453"
+      - "5453:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:

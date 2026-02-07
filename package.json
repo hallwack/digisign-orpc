@@ -34,7 +34,10 @@
     "db:start": "turbo -F @digisign/db db:start",
     "db:watch": "turbo -F @digisign/db db:watch",
     "db:stop": "turbo -F @digisign/db db:stop",
-    "db:down": "turbo -F @digisign/db db:down"
+    "db:down": "turbo -F @digisign/db db:down",
+    "infra:up": "docker compose -f docker-compose.dev.yml up -d",
+    "infra:down": "docker compose -f docker-compose.dev.yml down",
+    "infra:logs": "docker compose -f docker-compose.dev.yml logs -f"
   },
   "dependencies": {
     "@digisign/env": "workspace:*",
