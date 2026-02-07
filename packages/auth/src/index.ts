@@ -8,7 +8,12 @@ import { env } from "@digisign/env/server";
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
-    schema: schema,
+    schema: {
+      user: schema.userTable,
+      account: schema.accountTable,
+      session: schema.sessionTable,
+      verificationToken: schema.verificationTable,
+    },
   }),
   trustedOrigins: [env.CORS_ORIGIN],
   emailAndPassword: {
