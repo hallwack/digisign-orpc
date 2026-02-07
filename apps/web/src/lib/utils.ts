@@ -4,3 +4,11 @@ import { twMerge } from "tailwind-merge";
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+
+export function parseSlug(slug: string) {
+  const parts = slug.split("-");
+  const documentId = parts.pop();
+  const title = parts.map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
+
+  return { title, documentId };
+}
