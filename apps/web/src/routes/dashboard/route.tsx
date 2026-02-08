@@ -1,4 +1,4 @@
-import { createFileRoute, redirect, useLocation } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { Outlet } from "@tanstack/react-router";
 
 import AppSidebar from "@/components/app-sidebar";
@@ -22,9 +22,6 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 function DashboardPageComponent() {
-  const location = useLocation();
-  console.log("location:", location);
-
   return (
     <SidebarProvider>
       <AppSidebar user={null} />
