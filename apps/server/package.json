@@ -15,6 +15,7 @@
     "@digisign/db": "workspace:*",
     "@digisign/env": "workspace:*",
     "@elysiajs/cors": "^1.4.1",
+    "@elysiajs/static": "^1.4.7",
     "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",
     "@orpc/zod": "catalog:",
