@@ -11,6 +11,7 @@ export const documentInsertSchema = createInsertSchema(documentTable, {
 }).omit({
   id: true,
   userId: true,
+  fileName: true,
   hash: true,
   createdAt: true,
   updatedAt: true,
@@ -114,8 +115,19 @@ const fileSchema = z.instanceof(File).refine(
 );
 
 export const documentUploadSchema = documentInsertSchema.extend({
-  file: fileSchema,
-  overwrite: z.string().default("false").optional(),
+  file: z.instanceof(File, { message: "Document is required" }).refine(
+    (file) =>
+      [
+        "application/pdf",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", // .xlsx
+        "application/msword", // .doc
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document", // .docx
+        "application/vnd.ms-excel", // .xls
+      ].includes(file.type),
+    { message: "Invalid document file type (PDF, Word, or Excel only)" },
+  ),
+  title: z.string().min(1, { message: "Document title is required" }),
+  description: z.string().min(1, { message: "Document description is required" }),
 });
 
 export const documentIdSchema = z.object({
