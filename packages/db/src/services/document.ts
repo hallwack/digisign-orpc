@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { db } from "..";
 import { directoryExists } from "../libs/directory";
 import { getDocumentHash, getHumanReadableFileSize } from "../libs/document";
-import { lowerSql, toBoolean } from "../libs/parse";
+import { lowerSql } from "../libs/parse";
 import { generateId } from "../libs/random";
 import { convertToSlug, parseSlug } from "../libs/slug";
 import type { DocumentDataTableRequest, DocumentDataTableResponse, DocumentUploadSchema } from "../schemas/document";
@@ -32,10 +32,6 @@ export class DocumentService {
 
       matchedTitle = parsedMatched.title;
       matchedDocumentId = parsedMatched.id;
-    }
-
-    if (matchedDir && !toBoolean(form.overwrite as string)) {
-      throw new Error("CONFLICT: File/Path already exists");
     }
 
     if (matchedDocumentId && matchedTitle) {
