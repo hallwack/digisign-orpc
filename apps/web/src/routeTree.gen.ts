@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRegisterRouteImport } from './routes/_auth/register'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
 import { Route as DashboardDocumentRouteRouteImport } from './routes/dashboard/document/route'
+import { Route as DashboardDocumentIndexRouteImport } from './routes/dashboard/document/index'
 import { Route as DashboardDocumentUploadRouteImport } from './routes/dashboard/document/upload'
 import { Route as DashboardDocumentSignRouteImport } from './routes/dashboard/document/sign'
 
@@ -47,6 +48,11 @@ const DashboardDocumentRouteRoute = DashboardDocumentRouteRouteImport.update({
   path: '/document',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
+const DashboardDocumentIndexRoute = DashboardDocumentIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => DashboardDocumentRouteRoute,
+} as any)
 const DashboardDocumentUploadRoute = DashboardDocumentUploadRouteImport.update({
   id: '/upload',
   path: '/upload',
@@ -66,15 +72,16 @@ export interface FileRoutesByFullPath {
   '/register': typeof AuthRegisterRoute
   '/dashboard/document/sign': typeof DashboardDocumentSignRoute
   '/dashboard/document/upload': typeof DashboardDocumentUploadRoute
+  '/dashboard/document/': typeof DashboardDocumentIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRouteRouteWithChildren
-  '/dashboard/document': typeof DashboardDocumentRouteRouteWithChildren
   '/login': typeof AuthLoginRoute
   '/register': typeof AuthRegisterRoute
   '/dashboard/document/sign': typeof DashboardDocumentSignRoute
   '/dashboard/document/upload': typeof DashboardDocumentUploadRoute
+  '/dashboard/document': typeof DashboardDocumentIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -86,6 +93,7 @@ export interface FileRoutesById {
   '/_auth/register': typeof AuthRegisterRoute
   '/dashboard/document/sign': typeof DashboardDocumentSignRoute
   '/dashboard/document/upload': typeof DashboardDocumentUploadRoute
+  '/dashboard/document/': typeof DashboardDocumentIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -97,15 +105,16 @@ export interface FileRouteTypes {
     | '/register'
     | '/dashboard/document/sign'
     | '/dashboard/document/upload'
+    | '/dashboard/document/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/dashboard'
-    | '/dashboard/document'
     | '/login'
     | '/register'
     | '/dashboard/document/sign'
     | '/dashboard/document/upload'
+    | '/dashboard/document'
   id:
     | '__root__'
     | '/'
@@ -116,6 +125,7 @@ export interface FileRouteTypes {
     | '/_auth/register'
     | '/dashboard/document/sign'
     | '/dashboard/document/upload'
+    | '/dashboard/document/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -168,6 +178,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardDocumentRouteRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/dashboard/document/': {
+      id: '/dashboard/document/'
+      path: '/'
+      fullPath: '/dashboard/document/'
+      preLoaderRoute: typeof DashboardDocumentIndexRouteImport
+      parentRoute: typeof DashboardDocumentRouteRoute
+    }
     '/dashboard/document/upload': {
       id: '/dashboard/document/upload'
       path: '/upload'
@@ -188,12 +205,14 @@ declare module '@tanstack/react-router' {
 interface DashboardDocumentRouteRouteChildren {
   DashboardDocumentSignRoute: typeof DashboardDocumentSignRoute
   DashboardDocumentUploadRoute: typeof DashboardDocumentUploadRoute
+  DashboardDocumentIndexRoute: typeof DashboardDocumentIndexRoute
 }
 
 const DashboardDocumentRouteRouteChildren: DashboardDocumentRouteRouteChildren =
   {
     DashboardDocumentSignRoute: DashboardDocumentSignRoute,
     DashboardDocumentUploadRoute: DashboardDocumentUploadRoute,
+    DashboardDocumentIndexRoute: DashboardDocumentIndexRoute,
   }
 
 const DashboardDocumentRouteRouteWithChildren =
