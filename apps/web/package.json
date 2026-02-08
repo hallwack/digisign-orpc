@@ -14,6 +14,7 @@
     "@base-ui/react": "^1.1.0",
     "@digisign/api": "workspace:*",
     "@digisign/auth": "workspace:*",
+    "@digisign/db": "workspace:*",
     "@digisign/env": "workspace:*",
     "@fontsource-variable/noto-sans": "^5.2.10",
     "@hookform/resolvers": "^5.1.1",
