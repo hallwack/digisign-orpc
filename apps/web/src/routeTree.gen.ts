@@ -15,7 +15,9 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRegisterRouteImport } from './routes/_auth/register'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
 import { Route as DashboardDocumentRouteRouteImport } from './routes/dashboard/document/route'
+import { Route as DashboardKeyIndexRouteImport } from './routes/dashboard/key/index'
 import { Route as DashboardDocumentIndexRouteImport } from './routes/dashboard/document/index'
+import { Route as DashboardKeyCreateRouteImport } from './routes/dashboard/key/create'
 import { Route as DashboardDocumentUploadRouteImport } from './routes/dashboard/document/upload'
 import { Route as DashboardDocumentSignRouteImport } from './routes/dashboard/document/sign'
 
@@ -48,10 +50,20 @@ const DashboardDocumentRouteRoute = DashboardDocumentRouteRouteImport.update({
   path: '/document',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
+const DashboardKeyIndexRoute = DashboardKeyIndexRouteImport.update({
+  id: '/key/',
+  path: '/key/',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
 const DashboardDocumentIndexRoute = DashboardDocumentIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => DashboardDocumentRouteRoute,
+} as any)
+const DashboardKeyCreateRoute = DashboardKeyCreateRouteImport.update({
+  id: '/key/create',
+  path: '/key/create',
+  getParentRoute: () => DashboardRouteRoute,
 } as any)
 const DashboardDocumentUploadRoute = DashboardDocumentUploadRouteImport.update({
   id: '/upload',
@@ -72,7 +84,9 @@ export interface FileRoutesByFullPath {
   '/register': typeof AuthRegisterRoute
   '/dashboard/document/sign': typeof DashboardDocumentSignRoute
   '/dashboard/document/upload': typeof DashboardDocumentUploadRoute
+  '/dashboard/key/create': typeof DashboardKeyCreateRoute
   '/dashboard/document/': typeof DashboardDocumentIndexRoute
+  '/dashboard/key/': typeof DashboardKeyIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -81,7 +95,9 @@ export interface FileRoutesByTo {
   '/register': typeof AuthRegisterRoute
   '/dashboard/document/sign': typeof DashboardDocumentSignRoute
   '/dashboard/document/upload': typeof DashboardDocumentUploadRoute
+  '/dashboard/key/create': typeof DashboardKeyCreateRoute
   '/dashboard/document': typeof DashboardDocumentIndexRoute
+  '/dashboard/key': typeof DashboardKeyIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -93,7 +109,9 @@ export interface FileRoutesById {
   '/_auth/register': typeof AuthRegisterRoute
   '/dashboard/document/sign': typeof DashboardDocumentSignRoute
   '/dashboard/document/upload': typeof DashboardDocumentUploadRoute
+  '/dashboard/key/create': typeof DashboardKeyCreateRoute
   '/dashboard/document/': typeof DashboardDocumentIndexRoute
+  '/dashboard/key/': typeof DashboardKeyIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -105,7 +123,9 @@ export interface FileRouteTypes {
     | '/register'
     | '/dashboard/document/sign'
     | '/dashboard/document/upload'
+    | '/dashboard/key/create'
     | '/dashboard/document/'
+    | '/dashboard/key/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -114,7 +134,9 @@ export interface FileRouteTypes {
     | '/register'
     | '/dashboard/document/sign'
     | '/dashboard/document/upload'
+    | '/dashboard/key/create'
     | '/dashboard/document'
+    | '/dashboard/key'
   id:
     | '__root__'
     | '/'
@@ -125,7 +147,9 @@ export interface FileRouteTypes {
     | '/_auth/register'
     | '/dashboard/document/sign'
     | '/dashboard/document/upload'
+    | '/dashboard/key/create'
     | '/dashboard/document/'
+    | '/dashboard/key/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -178,12 +202,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardDocumentRouteRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/dashboard/key/': {
+      id: '/dashboard/key/'
+      path: '/key'
+      fullPath: '/dashboard/key/'
+      preLoaderRoute: typeof DashboardKeyIndexRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
     '/dashboard/document/': {
       id: '/dashboard/document/'
       path: '/'
       fullPath: '/dashboard/document/'
       preLoaderRoute: typeof DashboardDocumentIndexRouteImport
       parentRoute: typeof DashboardDocumentRouteRoute
+    }
+    '/dashboard/key/create': {
+      id: '/dashboard/key/create'
+      path: '/key/create'
+      fullPath: '/dashboard/key/create'
+      preLoaderRoute: typeof DashboardKeyCreateRouteImport
+      parentRoute: typeof DashboardRouteRoute
     }
     '/dashboard/document/upload': {
       id: '/dashboard/document/upload'
@@ -222,10 +260,14 @@ const DashboardDocumentRouteRouteWithChildren =
 
 interface DashboardRouteRouteChildren {
   DashboardDocumentRouteRoute: typeof DashboardDocumentRouteRouteWithChildren
+  DashboardKeyCreateRoute: typeof DashboardKeyCreateRoute
+  DashboardKeyIndexRoute: typeof DashboardKeyIndexRoute
 }
 
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardDocumentRouteRoute: DashboardDocumentRouteRouteWithChildren,
+  DashboardKeyCreateRoute: DashboardKeyCreateRoute,
+  DashboardKeyIndexRoute: DashboardKeyIndexRoute,
 }
 
 const DashboardRouteRouteWithChildren = DashboardRouteRoute._addFileChildren(
