@@ -1,13 +1,18 @@
 import { useForm } from "@tanstack/react-form";
 
-import { documentSignSchema } from "@digisign/db/schemas/document";
+import { type GetAllDocumentResponse, documentSignSchema } from "@digisign/db/schemas/document";
 
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectSeparator, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-export default function SignDocumentForm() {
+interface SignDocumentFormProps {
+  documents: GetAllDocumentResponse;
+}
+
+export default function SignDocumentForm({ documents }: SignDocumentFormProps) {
   const form = useForm({
     defaultValues: {
       documentId: "",
@@ -30,16 +35,27 @@ export default function SignDocumentForm() {
                   const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
                   return (
                     <Field data-invalid={isInvalid}>
-                      <FieldLabel>Document</FieldLabel>
-                      <Select name={field.name} value={field.state.value} onValueChange={field.handleChange}>
-                        <SelectTrigger id="form-tanstack-select-language" aria-invalid={isInvalid} className="min-w-30">
-                          <SelectValue placeholder="Select" />
+                      <FieldLabel htmlFor={field.name}>Document</FieldLabel>
+                      <Select
+                        name={field.name}
+                        value={field.state.value}
+                        onValueChange={(value) => field.handleChange(value ?? "")}
+                        aria-invalid={isInvalid}
+                      >
+                        <SelectTrigger id={field.name}>
+                          <SelectValue placeholder="Select Document">
+                            {documents.find((doc) => doc.id === field.state.value)?.title || "Select Document"}
+                          </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="auto">Auto</SelectItem>
-                          <SelectSeparator />
+                          {documents.map((doc) => (
+                            <SelectItem key={doc.id} value={doc.id}>
+                              {doc.title}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
+                      {isInvalid && <FieldError errors={field.state.meta.errors} />}
                     </Field>
                   );
                 }}
@@ -50,7 +66,7 @@ export default function SignDocumentForm() {
                   const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
                   return (
                     <Field data-invalid={isInvalid}>
-                      <FieldLabel>Private Key File</FieldLabel>
+                      <FieldLabel htmlFor={field.name}>Private Key File</FieldLabel>
                       <Input
                         accept=".pem,.key"
                         type="file"
@@ -62,11 +78,14 @@ export default function SignDocumentForm() {
                         name={field.name}
                         aria-invalid={isInvalid}
                       />
+                      {isInvalid && <FieldError errors={field.state.meta.errors} />}
                     </Field>
                   );
                 }}
               />
             </FieldGroup>
+
+            <Button type="submit">Submit</Button>
           </form>
         </CardContent>
       </Card>
