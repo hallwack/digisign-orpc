@@ -155,18 +155,17 @@ export const documentVerifySchema = z.object({
   document: fileSchema,
 });
 
-export const getAllDocumentResponseSchema = z.object({
-  documents: z.array(
-    documentSchema.pick({
-      id: true,
-      userId: true,
-      fileName: true,
-      title: true,
-    }),
-  ),
-});
+export const getAllDocumentResponseSchema = z.array(
+  documentSchema.pick({
+    id: true,
+    userId: true,
+    fileName: true,
+    title: true,
+  }),
+);
 
 export type DocumentTableItem = z.infer<typeof documentTableItemSchema>;
 export type DocumentDataTableRequest = z.infer<typeof documentDataTableRequestSchema>;
 export type DocumentDataTableResponse = z.infer<typeof documentDataTableResponseSchema>;
 export type DocumentUploadSchema = z.infer<typeof documentUploadSchema>;
+export type GetAllDocumentResponse = z.infer<typeof getAllDocumentResponseSchema>;
