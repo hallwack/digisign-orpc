@@ -16,8 +16,9 @@ export class DocumentService {
     const documentHash = await getDocumentHash(form.file);
     const documentPath = join("public", "documents");
     const documentId = generateId(15);
-    const titleName = convertToSlug(`${form.title}-${documentId}`);
-    const existedDir = convertToSlug(`${form.title}-${userId}`);
+    const cleanTitleSlug = convertToSlug(form.title);
+    const titleName = convertToSlug(`${cleanTitleSlug}-${documentId}`);
+    const existedDir = convertToSlug(`${cleanTitleSlug}-${userId}`);
     const matchedDir = directoryExists(documentPath, existedDir);
 
     let matchedTitle: string | undefined;
