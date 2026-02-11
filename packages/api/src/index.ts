@@ -13,7 +13,7 @@ const requireAuth = base.middleware(async ({ context, next }) => {
   }
   return next({
     context: {
-      session: context.session,
+      session: context.session as NonNullable<typeof context.session>,
     },
   });
 });
