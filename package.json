@@ -21,8 +21,10 @@
   },
   "type": "module",
   "scripts": {
+    "prepare": "mkdir -p storage/documents",
     "dev": "turbo dev",
     "build": "turbo build",
+    "clean": "rm -rf storage/documents/*",
     "check-types": "turbo check-types",
     "dev:native": "turbo -F native dev",
     "dev:web": "turbo -F web dev",
