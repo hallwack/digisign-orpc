@@ -14,7 +14,6 @@ import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthRegisterRouteImport } from './routes/_auth/register'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
-import { Route as DashboardDocumentRouteRouteImport } from './routes/dashboard/document/route'
 import { Route as DashboardKeyIndexRouteImport } from './routes/dashboard/key/index'
 import { Route as DashboardDocumentIndexRouteImport } from './routes/dashboard/document/index'
 import { Route as DashboardKeyCreateRouteImport } from './routes/dashboard/key/create'
@@ -45,20 +44,15 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => AuthRoute,
 } as any)
-const DashboardDocumentRouteRoute = DashboardDocumentRouteRouteImport.update({
-  id: '/document',
-  path: '/document',
-  getParentRoute: () => DashboardRouteRoute,
-} as any)
 const DashboardKeyIndexRoute = DashboardKeyIndexRouteImport.update({
   id: '/key/',
   path: '/key/',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
 const DashboardDocumentIndexRoute = DashboardDocumentIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => DashboardDocumentRouteRoute,
+  id: '/document/',
+  path: '/document/',
+  getParentRoute: () => DashboardRouteRoute,
 } as any)
 const DashboardKeyCreateRoute = DashboardKeyCreateRouteImport.update({
   id: '/key/create',
@@ -66,20 +60,19 @@ const DashboardKeyCreateRoute = DashboardKeyCreateRouteImport.update({
   getParentRoute: () => DashboardRouteRoute,
 } as any)
 const DashboardDocumentUploadRoute = DashboardDocumentUploadRouteImport.update({
-  id: '/upload',
-  path: '/upload',
-  getParentRoute: () => DashboardDocumentRouteRoute,
+  id: '/document/upload',
+  path: '/document/upload',
+  getParentRoute: () => DashboardRouteRoute,
 } as any)
 const DashboardDocumentSignRoute = DashboardDocumentSignRouteImport.update({
-  id: '/sign',
-  path: '/sign',
-  getParentRoute: () => DashboardDocumentRouteRoute,
+  id: '/document/sign',
+  path: '/document/sign',
+  getParentRoute: () => DashboardRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRouteRouteWithChildren
-  '/dashboard/document': typeof DashboardDocumentRouteRouteWithChildren
   '/login': typeof AuthLoginRoute
   '/register': typeof AuthRegisterRoute
   '/dashboard/document/sign': typeof DashboardDocumentSignRoute
@@ -104,7 +97,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/dashboard': typeof DashboardRouteRouteWithChildren
   '/_auth': typeof AuthRouteWithChildren
-  '/dashboard/document': typeof DashboardDocumentRouteRouteWithChildren
   '/_auth/login': typeof AuthLoginRoute
   '/_auth/register': typeof AuthRegisterRoute
   '/dashboard/document/sign': typeof DashboardDocumentSignRoute
@@ -118,7 +110,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/dashboard'
-    | '/dashboard/document'
     | '/login'
     | '/register'
     | '/dashboard/document/sign'
@@ -142,7 +133,6 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboard'
     | '/_auth'
-    | '/dashboard/document'
     | '/_auth/login'
     | '/_auth/register'
     | '/dashboard/document/sign'
@@ -195,13 +185,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof AuthRoute
     }
-    '/dashboard/document': {
-      id: '/dashboard/document'
-      path: '/document'
-      fullPath: '/dashboard/document'
-      preLoaderRoute: typeof DashboardDocumentRouteRouteImport
-      parentRoute: typeof DashboardRouteRoute
-    }
     '/dashboard/key/': {
       id: '/dashboard/key/'
       path: '/key'
@@ -211,10 +194,10 @@ declare module '@tanstack/react-router' {
     }
     '/dashboard/document/': {
       id: '/dashboard/document/'
-      path: '/'
+      path: '/document'
       fullPath: '/dashboard/document/'
       preLoaderRoute: typeof DashboardDocumentIndexRouteImport
-      parentRoute: typeof DashboardDocumentRouteRoute
+      parentRoute: typeof DashboardRouteRoute
     }
     '/dashboard/key/create': {
       id: '/dashboard/key/create'
@@ -225,48 +208,34 @@ declare module '@tanstack/react-router' {
     }
     '/dashboard/document/upload': {
       id: '/dashboard/document/upload'
-      path: '/upload'
+      path: '/document/upload'
       fullPath: '/dashboard/document/upload'
       preLoaderRoute: typeof DashboardDocumentUploadRouteImport
-      parentRoute: typeof DashboardDocumentRouteRoute
+      parentRoute: typeof DashboardRouteRoute
     }
     '/dashboard/document/sign': {
       id: '/dashboard/document/sign'
-      path: '/sign'
+      path: '/document/sign'
       fullPath: '/dashboard/document/sign'
       preLoaderRoute: typeof DashboardDocumentSignRouteImport
-      parentRoute: typeof DashboardDocumentRouteRoute
+      parentRoute: typeof DashboardRouteRoute
     }
   }
 }
 
-interface DashboardDocumentRouteRouteChildren {
+interface DashboardRouteRouteChildren {
   DashboardDocumentSignRoute: typeof DashboardDocumentSignRoute
   DashboardDocumentUploadRoute: typeof DashboardDocumentUploadRoute
-  DashboardDocumentIndexRoute: typeof DashboardDocumentIndexRoute
-}
-
-const DashboardDocumentRouteRouteChildren: DashboardDocumentRouteRouteChildren =
-  {
-    DashboardDocumentSignRoute: DashboardDocumentSignRoute,
-    DashboardDocumentUploadRoute: DashboardDocumentUploadRoute,
-    DashboardDocumentIndexRoute: DashboardDocumentIndexRoute,
-  }
-
-const DashboardDocumentRouteRouteWithChildren =
-  DashboardDocumentRouteRoute._addFileChildren(
-    DashboardDocumentRouteRouteChildren,
-  )
-
-interface DashboardRouteRouteChildren {
-  DashboardDocumentRouteRoute: typeof DashboardDocumentRouteRouteWithChildren
   DashboardKeyCreateRoute: typeof DashboardKeyCreateRoute
+  DashboardDocumentIndexRoute: typeof DashboardDocumentIndexRoute
   DashboardKeyIndexRoute: typeof DashboardKeyIndexRoute
 }
 
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
-  DashboardDocumentRouteRoute: DashboardDocumentRouteRouteWithChildren,
+  DashboardDocumentSignRoute: DashboardDocumentSignRoute,
+  DashboardDocumentUploadRoute: DashboardDocumentUploadRoute,
   DashboardKeyCreateRoute: DashboardKeyCreateRoute,
+  DashboardDocumentIndexRoute: DashboardDocumentIndexRoute,
   DashboardKeyIndexRoute: DashboardKeyIndexRoute,
 }
 
