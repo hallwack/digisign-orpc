@@ -1,15 +1,18 @@
 import { cors } from "@elysiajs/cors";
+import { staticPlugin } from "@elysiajs/static";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import { OpenAPIReferencePlugin } from "@orpc/openapi/plugins";
 import { onError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
 import { ZodToJsonSchemaConverter } from "@orpc/zod/zod4";
 import { Elysia } from "elysia";
+import path from "node:path";
 
 import { createContext } from "@digisign/api/context";
 import { appRouter } from "@digisign/api/routers/index";
 import { auth } from "@digisign/auth";
 import { env } from "@digisign/env/server";
+import { mkdirSync } from "node:fs";
 
 const rpcHandler = new RPCHandler(appRouter, {
   interceptors: [
@@ -41,6 +44,12 @@ const app = new Elysia()
       credentials: true,
     }),
   )
+  .use(
+    staticPlugin({
+      assets: path.resolve(import.meta.dir, "../../../storage/documents"),
+      prefix: "/documents",
+    }),
+  )
   .all("/api/auth/*", async (context) => {
     const { request, status } = context;
     if (["POST", "GET"].includes(request.method)) {
@@ -64,10 +73,13 @@ const app = new Elysia()
   })
   .get("/", () => "OK");
 
-  console.log("Route list:");
-  app.routes.forEach((route) => {
-    console.log(`${route.method} ${route.path}`);
-  });
+const storagePath = path.resolve(import.meta.dir, "../../../storage/documents");
+mkdirSync(storagePath, { recursive: true });
+
+console.log("Route list:");
+app.routes.forEach((route) => {
+  console.log(`${route.method} ${route.path}`);
+});
 
 app.listen(3000, () => {
   console.log("Server is running on http://localhost:3000");
