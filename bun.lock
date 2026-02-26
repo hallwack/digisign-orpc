@@ -52,6 +52,7 @@
         "@digisign/auth": "workspace:*",
         "@digisign/db": "workspace:*",
         "@digisign/env": "workspace:*",
+        "@digisign/types": "workspace:*",
         "@fontsource-variable/noto-sans": "^5.2.10",
         "@hookform/resolvers": "^5.1.1",
         "@orpc/client": "catalog:",
@@ -97,6 +98,7 @@
         "@digisign/auth": "workspace:*",
         "@digisign/db": "workspace:*",
         "@digisign/env": "workspace:*",
+        "@digisign/types": "workspace:*",
         "@orpc/client": "catalog:",
         "@orpc/openapi": "catalog:",
         "@orpc/server": "catalog:",
@@ -135,6 +137,7 @@
       "name": "@digisign/db",
       "dependencies": {
         "@digisign/env": "workspace:*",
+        "@digisign/types": "workspace:*",
         "dotenv": "catalog:",
         "drizzle-orm": "^0.45.1",
         "drizzle-zod": "^0.8.3",
@@ -155,6 +158,17 @@
       "dependencies": {
         "@t3-oss/env-core": "^0.13.1",
         "dotenv": "catalog:",
+        "zod": "catalog:",
+      },
+      "devDependencies": {
+        "@digisign/config": "workspace:*",
+        "@types/bun": "catalog:",
+        "typescript": "catalog:",
+      },
+    },
+    "packages/types": {
+      "name": "@digisign/types",
+      "dependencies": {
         "zod": "catalog:",
       },
       "devDependencies": {
@@ -264,6 +278,8 @@
     "@digisign/db": ["@digisign/db@workspace:packages/db"],
 
     "@digisign/env": ["@digisign/env@workspace:packages/env"],
+
+    "@digisign/types": ["@digisign/types@workspace:packages/types"],
 
     "@dotenvx/dotenvx": ["@dotenvx/dotenvx@1.51.4", "", { "dependencies": { "commander": "^11.1.0", "dotenv": "^17.2.1", "eciesjs": "^0.4.10", "execa": "^5.1.1", "fdir": "^6.2.0", "ignore": "^5.3.0", "object-treeify": "1.1.33", "picomatch": "^4.0.2", "which": "^4.0.0" }, "bin": { "dotenvx": "src/cli/dotenvx.js" } }, "sha512-AoziS8lRQ3ew/lY5J4JSlzYSN9Fo0oiyMBY37L3Bwq4mOQJT5GSrdZYLFPt6pH1LApDI3ZJceNyx+rHRACZSeQ=="],
 
