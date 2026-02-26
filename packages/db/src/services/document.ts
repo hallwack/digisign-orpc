@@ -1,6 +1,6 @@
 import { SQL, and, asc, count, desc, eq, gte, ilike, lte } from "drizzle-orm";
-import { rmSync } from "node:fs";
-import { join } from "node:path";
+import { mkdirSync, rmSync } from "node:fs";
+import { join, resolve } from "node:path";
 
 import { db } from "..";
 import { directoryExists } from "../libs/directory";
@@ -14,12 +14,14 @@ import { documentTable, signatureTable } from "../tables";
 export class DocumentService {
   static async uploadDocument(form: DocumentUploadSchema, userId: string | undefined) {
     const documentHash = await getDocumentHash(form.file);
-    const documentPath = join("public", "documents");
+    const storagePath = resolve(process.cwd(), "../../storage/documents");
+
     const documentId = generateId(15);
     const cleanTitleSlug = convertToSlug(form.title);
     const titleName = convertToSlug(`${cleanTitleSlug}-${documentId}`);
+
     const existedDir = convertToSlug(`${cleanTitleSlug}-${userId}`);
-    const matchedDir = directoryExists(documentPath, existedDir);
+    const matchedDir = directoryExists(storagePath, existedDir);
 
     let matchedTitle: string | undefined;
     let matchedDocumentId: string | undefined;
@@ -30,7 +32,6 @@ export class DocumentService {
 
     if (matchedDir) {
       const parsedMatched = parseSlug(matchedDir);
-
       matchedTitle = parsedMatched.title;
       matchedDocumentId = parsedMatched.id;
     }
@@ -59,13 +60,18 @@ export class DocumentService {
     }
 
     if (matchedDir) {
-      rmSync(join(documentPath, matchedDir), {
+      rmSync(join(storagePath, matchedDir), {
         recursive: true,
         force: true,
       });
     }
 
-    await Bun.write(`public/documents/${titleName}/${form.file.name}`, form.file);
+    const targetFolder = join(storagePath, titleName);
+    const targetFile = join(targetFolder, form.file.name);
+
+    mkdirSync(targetFolder, { recursive: true });
+
+    await Bun.write(targetFile, form.file);
 
     return {
       title: form.title,
@@ -259,10 +265,6 @@ export class DocumentService {
       },
       where: (documentTable, { eq }) => eq(documentTable.userId, userId),
     });
-
-    if (!documents || documents.length === 0) {
-      throw new Error("NOT_FOUND: Documents not found");
-    }
 
     return documents;
   }
