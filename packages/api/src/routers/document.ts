@@ -1,4 +1,4 @@
-import { documentUploadSchema } from "@digisign/db/schemas/document";
+import { documentUploadSchema } from "@digisign/types";
 import { DocumentService } from "@digisign/db/services/document";
 
 import { protectedProcedure } from "..";
