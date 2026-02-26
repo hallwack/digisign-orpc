@@ -16,6 +16,7 @@
     "@digisign/auth": "workspace:*",
     "@digisign/db": "workspace:*",
     "@digisign/env": "workspace:*",
+    "@digisign/types": "workspace:*",
     "@fontsource-variable/noto-sans": "^5.2.10",
     "@hookform/resolvers": "^5.1.1",
     "@orpc/client": "catalog:",

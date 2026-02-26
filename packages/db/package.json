@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@digisign/env": "workspace:*",
+    "@digisign/types": "workspace:*",
     "dotenv": "catalog:",
     "drizzle-orm": "^0.45.1",
     "drizzle-zod": "^0.8.3",

@@ -14,6 +14,7 @@
     "@digisign/auth": "workspace:*",
     "@digisign/db": "workspace:*",
     "@digisign/env": "workspace:*",
+    "@digisign/types": "workspace:*",
     "@orpc/client": "catalog:",
     "@orpc/openapi": "catalog:",
     "@orpc/server": "catalog:",
