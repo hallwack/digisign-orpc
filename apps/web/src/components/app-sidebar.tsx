@@ -20,12 +20,15 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { useLogoutFn } from "@/hooks/query-mutation/auth";
 import { sidebarFooterMenu, sidebarMainMenu } from "@/lib/sidebar-menu";
 
 export default function AppSidebar({ user }: { user: User | null }) {
   const logout = useLogoutFn();
+
+  const { isMobile } = useSidebar();
 
   return (
     <Sidebar variant="inset">
@@ -87,7 +90,12 @@ export default function AppSidebar({ user }: { user: User | null }) {
                   </SidebarMenuButton>
                 }
               />
-              <DropdownMenuContent side="top" className="w-[--radix-popper-anchor-width]">
+              <DropdownMenuContent
+                className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+                side={isMobile ? "bottom" : "right"}
+                align="end"
+                sideOffset={4}
+              >
                 {sidebarFooterMenu.map((item) => (
                   <DropdownMenuItem
                     key={item.title}

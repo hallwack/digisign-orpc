@@ -24,7 +24,7 @@ export const sidebarMainMenu = [
         url: "/dashboard",
         icon: LayoutDashboard,
       },
-      {
+      /* {
         title: "Generate Signature",
         shortName: "Generate",
         url: "/dashboard/generate-signature",
@@ -35,7 +35,7 @@ export const sidebarMainMenu = [
         shortName: "Append",
         url: "/dashboard/append-file",
         icon: FileLock2,
-      },
+      }, */
     ],
   },
   {
@@ -88,7 +88,7 @@ export const sidebarMainMenu = [
       },
     ],
   },
-  {
+  /* {
     title: "User and Role Management",
     shortName: "User & Role",
     url: "#",
@@ -106,7 +106,7 @@ export const sidebarMainMenu = [
         icon: Users,
       },
     ],
-  },
+  }, */
 ];
 
 export const sidebarFooterMenu = [{ title: "Settings", url: "/settings", icon: Settings }];
