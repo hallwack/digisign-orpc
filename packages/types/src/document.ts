@@ -1,75 +1,48 @@
 import z from "zod";
 
-import { dateQuerySchema, documentFileSchema, documentKeySchema } from "./utils";
+import { createPaginationSchema, dateQuerySchema, documentFileSchema, documentKeySchema, idSchema } from "./utils";
 
 export const documentSchema = z.object({
-  id: z.uuid(),
-  userId: z.uuid(),
+  id: idSchema,
+  userId: idSchema,
   hash: z.string().max(255),
   fileName: z.string().max(255),
   title: z.string().min(1, "Title cannot be empty").max(255),
   description: z.string().min(1, "Description cannot be empty"),
-  createdAt: z.date().optional(),
-  updatedAt: z.date().optional(),
+  createdAt: z.date().or(z.iso.datetime()),
+  updatedAt: z.date().or(z.iso.datetime()),
 });
 
-export const documentInsertSchema = documentSchema.omit({
-  id: true,
-  userId: true,
-  fileName: true,
-  hash: true,
-  createdAt: true,
-  updatedAt: true,
+// --- Request Schema ---
+export const documentSortFields = z.enum(["createdAt", "updatedAt", "title", "fileName"]);
+
+export const documentInsertSchema = documentSchema.pick({
+  title: true,
+  description: true,
 });
 
-const documentSortFields = documentSchema.keyof().options;
-const documentSortItemSchema = z.object({
-  id: z.enum(documentSortFields),
-  desc: z.boolean().optional(),
-});
-
-export const documentDataTableRequestSchema = z.object({
-  page: z.coerce.number().min(1).default(1),
-  perPage: z.coerce.number().min(1).max(100).default(10),
-  sort: z
-    .string()
-    .optional()
-    .transform((val) => {
-      if (!val) return [];
-      try {
-        const parsed = JSON.parse(val);
-        return z.array(documentSortItemSchema).parse(parsed);
-      } catch {
-        return [];
-      }
-    }),
+export const documentDataTableRequestSchema = createPaginationSchema(documentSortFields).extend({
   title: z.string().optional(),
-  createdAt: dateQuerySchema,
-  updatedAt: dateQuerySchema,
-  signedAt: dateQuerySchema,
-  filters: z
-    .string()
-    .optional()
-    .transform((val) => {
-      if (!val) return undefined;
-      try {
-        return JSON.parse(val);
-      } catch (err) {
-        return err;
-      }
-    }),
+  createdAt: dateQuerySchema.optional(),
+  updatedAt: dateQuerySchema.optional(),
+  signedAt: dateQuerySchema.optional(),
 });
 
-export const documentUploadSchema = documentInsertSchema.extend({
-  file: documentFileSchema,
-});
+export const documentUploadSchema = documentSchema
+  .pick({
+    title: true,
+    description: true,
+  })
+  .extend({
+    file: documentFileSchema,
+  });
 
 export const documentIdSchema = z.object({
-  id: documentSchema.shape.id,
+  id: idSchema,
 });
 
 export const documentSignSchema = z.object({
-  documentId: documentSchema.shape.id,
+  documentId: idSchema,
   privateKey: documentKeySchema,
 });
 
@@ -77,6 +50,7 @@ export const documentVerifySchema = z.object({
   document: documentFileSchema,
 });
 
+// --- Response Schema ---
 export const documentTableItemSchema = documentSchema;
 
 export const documentDataTableResponseSchema = z.object({
@@ -86,6 +60,14 @@ export const documentDataTableResponseSchema = z.object({
   page: z.number(),
   perPage: z.number(),
 });
+
+export const signatureMetadataSchema = z.object({
+  documentHash: z.string(),
+  documentId: idSchema,
+  rsaSignature: z.string(),
+  eddsaSignature: z.string(),
+  createdAt: z.date().or(z.iso.datetime()),
+})
 
 export const documentShowResponseSchema = documentSchema.extend({
   fileSize: z.string().optional(),
