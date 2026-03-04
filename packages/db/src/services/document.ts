@@ -153,7 +153,15 @@ export class DocumentService {
       // Build order by
       const orderBy =
         params.sort.length > 0
-          ? params.sort.map((item) => (item.desc ? desc(documentTable[item.id]) : asc(documentTable[item.id])))
+          ? params.sort.map((item) => {
+              // Tentukan kolom berdasarkan ID sort
+              const column =
+                item.id === "signedAt"
+                  ? signatureTable.signedAt
+                  : documentTable[item.id];
+
+              return item.desc ? desc(column) : asc(column);
+            })
           : [desc(documentTable.createdAt)]; // Default sort by created_at desc
 
       // Execute transaction to get both data and count
@@ -178,7 +186,7 @@ export class DocumentService {
           .offset(offset);
 
         const totalResult = await ctx
-          .select({ count: count() })
+          .select({ count: count(documentTable.id) })
           .from(documentTable)
           .leftJoin(signatureTable, eq(signatureTable.documentId, documentTable.id))
           .where(where);
