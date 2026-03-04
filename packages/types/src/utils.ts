@@ -58,7 +58,7 @@ export const idSchema = z.uuid();
 export const createPaginationSchema = <T extends z.ZodEnum<any>>(sortEnum: T) =>
   z.object({
     page: z.coerce.number().int().positive().default(1),
-    perPage: z.coerce.number().int().positive().max(100).default(10),
+    perPage: z.coerce.number().int().positive().max(100).default(5),
     sort: z
       .string()
       .optional()
