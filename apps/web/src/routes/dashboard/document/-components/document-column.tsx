@@ -2,6 +2,8 @@ import { type ColumnDef } from "@tanstack/react-table";
 import { EyeIcon, KeyIcon, MoreHorizontalIcon, TrashIcon } from "lucide-react";
 import { useMemo } from "react";
 
+import type { DocumentTableItem } from "@digisign/types";
+
 import { DataTableColumnHeader } from "@/components/data-table-column-header";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,40 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-/**
- * Example DocumentTableItem type - replace with your actual type
- */
-interface DocumentTableItem {
-  id: string;
-  title: string;
-  createdAt: Date;
-  signedAt: Date | null;
-}
-
-/**
- * Helper function to format dates
- */
-function formatDate(date: Date | null): string {
-  if (!date) return "-";
-  return new Intl.DateTimeFormat("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  }).format(new Date(date));
-}
-
-/**
- * Helper function to convert to slug
- */
-function convertToSlug(text: string): string {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/[\s_]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
+import { convertToSlug, formatDate } from "@/lib/format";
 
 interface UseDocumentColumnsProps {
   onViewDocument?: (id: string) => void;
@@ -52,10 +21,6 @@ interface UseDocumentColumnsProps {
   onDeleteDocument?: (id: string) => void;
 }
 
-/**
- * Custom hook to create document table columns
- * Adapts your existing column definitions to work with the new DataTable
- */
 export function useDocumentColumns({ onViewDocument, onSignDocument, onDeleteDocument }: UseDocumentColumnsProps = {}) {
   const columns = useMemo<ColumnDef<DocumentTableItem>[]>(
     () => [
@@ -63,9 +28,7 @@ export function useDocumentColumns({ onViewDocument, onSignDocument, onDeleteDoc
         id: "id",
         accessorKey: "id",
         header: ({ column }) => <DataTableColumnHeader column={column} title="Document ID" />,
-        cell: ({ row }) => {
-          console.log("Row ID:", row);
-        },
+        cell: ({ row }) => <div>{row.getValue("id")}</div>,
         enableSorting: false,
         enableHiding: false,
       },
@@ -91,19 +54,17 @@ export function useDocumentColumns({ onViewDocument, onSignDocument, onDeleteDoc
           variant: "dateRange",
         },
         enableColumnFilter: true,
-        enableSorting: true,
       },
       {
         id: "signedAt",
         accessorKey: "signedAt",
         header: ({ column }) => <DataTableColumnHeader column={column} title="Signed At" />,
-        cell: ({ row }) => formatDate(row.getValue<Date | null>("signedAt")),
+        cell: ({ row }) => formatDate(row.getValue<Date>("signedAt")),
         meta: {
           label: "Signed At",
           variant: "dateRange",
         },
         enableColumnFilter: true,
-        enableSorting: true,
       },
       {
         id: "actions",
@@ -113,12 +74,14 @@ export function useDocumentColumns({ onViewDocument, onSignDocument, onDeleteDoc
 
           return (
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <MoreHorizontalIcon className="h-4 w-4" />
-                  <span className="sr-only">Open menu</span>
-                </Button>
-              </DropdownMenuTrigger>
+              <DropdownMenuTrigger
+                render={
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <MoreHorizontalIcon className="h-4 w-4" />
+                    <span className="sr-only">Open menu</span>
+                  </Button>
+                }
+              />
               <DropdownMenuContent align="end">
                 <DropdownMenuGroup>
                   <DropdownMenuItem className="cursor-pointer" onClick={() => onViewDocument?.(row.original.id)}>
@@ -142,8 +105,6 @@ export function useDocumentColumns({ onViewDocument, onSignDocument, onDeleteDoc
           );
         },
         size: 24,
-        enableSorting: false,
-        enableHiding: false,
       },
     ],
     [onViewDocument, onSignDocument, onDeleteDocument],
