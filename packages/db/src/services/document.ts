@@ -2,13 +2,14 @@ import { SQL, and, asc, count, desc, eq, gte, ilike, lte } from "drizzle-orm";
 import { mkdirSync, rmSync } from "node:fs";
 import { join, resolve } from "node:path";
 
+import type { DocumentDataTableRequest, DocumentDataTableResponse, DocumentUploadSchema } from "@digisign/types";
+
 import { db } from "..";
 import { directoryExists } from "../libs/directory";
 import { getDocumentHash, getHumanReadableFileSize } from "../libs/document";
 import { lowerSql } from "../libs/parse";
 import { generateId } from "../libs/random";
 import { convertToSlug, parseSlug } from "../libs/slug";
-import type { DocumentDataTableRequest, DocumentDataTableResponse, DocumentUploadSchema } from "../schemas/document";
 import { documentTable, signatureTable } from "../tables";
 
 export class DocumentService {
