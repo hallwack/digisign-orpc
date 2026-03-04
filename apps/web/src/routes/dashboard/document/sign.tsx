@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { orpc } from "@/utils/orpc";
 
-import SignDocumentForm from "./-components/sign-document-form";
+import DocumentSignForm from "./-components/document-sign-form";
 
 export const Route = createFileRoute("/dashboard/document/sign")({
   component: DashboardDocumentSignPageComponent,
@@ -19,7 +19,7 @@ function DashboardDocumentSignPageComponent() {
     <div className="space-y-6">
       <h1 className="text-2xl font-bold tracking-tight">Sign Document</h1>
 
-      <SignDocumentForm documents={documents} />
+      <DocumentSignForm documents={documents} />
     </div>
   );
 }

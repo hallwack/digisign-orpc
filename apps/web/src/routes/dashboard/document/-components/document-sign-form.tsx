@@ -12,7 +12,7 @@ interface SignDocumentFormProps {
   documents: GetAllDocumentResponse;
 }
 
-export default function SignDocumentForm({ documents }: SignDocumentFormProps) {
+export default function DocumentSignForm({ documents }: SignDocumentFormProps) {
   const form = useForm({
     defaultValues: {
       documentId: "",

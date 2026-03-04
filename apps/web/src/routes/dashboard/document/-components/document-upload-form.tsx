@@ -21,7 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { orpc } from "@/utils/orpc";
 
-export default function UploadDocumentForm() {
+export default function DocumentUploadForm() {
   const navigate = useNavigate();
   const mutation = useMutation(
     orpc.document.upload.mutationOptions({
