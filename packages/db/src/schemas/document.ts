@@ -26,7 +26,7 @@ const documentSortItemSchema = z.object({
 
 export const documentDataTableRequestSchema = z.object({
   page: z.coerce.number().min(1).default(1),
-  perPage: z.coerce.number().min(1).max(100).default(10),
+  perPage: z.coerce.number().min(1).max(100).default(5),
   sort: z
     .string()
     .optional()
