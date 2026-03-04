@@ -12,3 +12,12 @@ export function formatDate(date: Date | string | number | undefined, opts: Intl.
     return "";
   }
 }
+
+export function convertToSlug(text: string) {
+  return text
+    .trimEnd()
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .replace(/ /g, "-")
+    .replace(/[^\w-]+/g, "");
+}
