@@ -8,8 +8,8 @@ export const keySchema = z.object({
   keyName: z.string().min(1, "Key name is required"),
   publicKeyRsa: z.string().min(1),
   publicKeyEddsa: z.string().min(1),
-  createdAt: z.date().or(z.iso.datetime()),
-  revokedAt: z.date().or(z.iso.datetime()),
+  createdAt: z.date().nullable(),
+  revokedAt: z.date().nullable(),
 });
 
 // --- Request Schema ---

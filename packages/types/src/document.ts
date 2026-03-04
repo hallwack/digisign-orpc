@@ -9,8 +9,8 @@ export const documentSchema = z.object({
   fileName: z.string().max(255),
   title: z.string().min(1, "Title cannot be empty").max(255),
   description: z.string().min(1, "Description cannot be empty"),
-  createdAt: z.date().or(z.iso.datetime()),
-  updatedAt: z.date().or(z.iso.datetime()),
+  createdAt: z.date().nullable(),
+  updatedAt: z.date().nullable(),
 });
 
 // --- Request Schema ---
@@ -23,9 +23,9 @@ export const documentInsertSchema = documentSchema.pick({
 
 export const documentDataTableRequestSchema = createPaginationSchema(documentSortFields).extend({
   title: z.string().optional(),
-  createdAt: dateQuerySchema.optional(),
-  updatedAt: dateQuerySchema.optional(),
-  signedAt: dateQuerySchema.optional(),
+  createdAt: dateQuerySchema,
+  updatedAt: dateQuerySchema,
+  signedAt: dateQuerySchema,
 });
 
 export const documentUploadSchema = documentSchema
@@ -67,7 +67,7 @@ export const signatureMetadataSchema = z.object({
   rsaSignature: z.string(),
   eddsaSignature: z.string(),
   createdAt: z.date().or(z.iso.datetime()),
-})
+});
 
 export const documentShowResponseSchema = documentSchema.extend({
   fileSize: z.string().optional(),
