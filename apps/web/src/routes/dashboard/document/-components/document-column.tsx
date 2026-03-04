@@ -1,0 +1,153 @@
+import { type ColumnDef } from "@tanstack/react-table";
+import { EyeIcon, KeyIcon, MoreHorizontalIcon, TrashIcon } from "lucide-react";
+import { useMemo } from "react";
+
+import { DataTableColumnHeader } from "@/components/data-table-column-header";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+/**
+ * Example DocumentTableItem type - replace with your actual type
+ */
+interface DocumentTableItem {
+  id: string;
+  title: string;
+  createdAt: Date;
+  signedAt: Date | null;
+}
+
+/**
+ * Helper function to format dates
+ */
+function formatDate(date: Date | null): string {
+  if (!date) return "-";
+  return new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  }).format(new Date(date));
+}
+
+/**
+ * Helper function to convert to slug
+ */
+function convertToSlug(text: string): string {
+  return text
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/[\s_]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+interface UseDocumentColumnsProps {
+  onViewDocument?: (id: string) => void;
+  onSignDocument?: (id: string) => void;
+  onDeleteDocument?: (id: string) => void;
+}
+
+/**
+ * Custom hook to create document table columns
+ * Adapts your existing column definitions to work with the new DataTable
+ */
+export function useDocumentColumns({ onViewDocument, onSignDocument, onDeleteDocument }: UseDocumentColumnsProps = {}) {
+  const columns = useMemo<ColumnDef<DocumentTableItem>[]>(
+    () => [
+      {
+        id: "id",
+        accessorKey: "id",
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Document ID" />,
+        cell: ({ row }) => {
+          console.log("Row ID:", row);
+        },
+        enableSorting: false,
+        enableHiding: false,
+      },
+      {
+        id: "title",
+        accessorKey: "title",
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Title" />,
+        cell: ({ row }) => <div>{row.getValue("title")}</div>,
+        meta: {
+          label: "Title",
+          placeholder: "Search by title",
+          variant: "text",
+        },
+        enableColumnFilter: true,
+      },
+      {
+        id: "createdAt",
+        accessorKey: "createdAt",
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Created At" />,
+        cell: ({ row }) => formatDate(row.getValue<Date>("createdAt")),
+        meta: {
+          label: "Created At",
+          variant: "dateRange",
+        },
+        enableColumnFilter: true,
+        enableSorting: true,
+      },
+      {
+        id: "signedAt",
+        accessorKey: "signedAt",
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Signed At" />,
+        cell: ({ row }) => formatDate(row.getValue<Date | null>("signedAt")),
+        meta: {
+          label: "Signed At",
+          variant: "dateRange",
+        },
+        enableColumnFilter: true,
+        enableSorting: true,
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => {
+          const url = convertToSlug(`${row.original.title}-${row.original.id}`);
+
+          return (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <MoreHorizontalIcon className="h-4 w-4" />
+                  <span className="sr-only">Open menu</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuGroup>
+                  <DropdownMenuItem className="cursor-pointer" onClick={() => onViewDocument?.(row.original.id)}>
+                    <EyeIcon className="mr-2 h-4 w-4" />
+                    View Document
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer" onClick={() => onSignDocument?.(row.original.id)}>
+                    <KeyIcon className="mr-2 h-4 w-4" />
+                    Sign Document
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive cursor-pointer"
+                    onClick={() => onDeleteDocument?.(url)}
+                  >
+                    <TrashIcon className="mr-2 h-4 w-4" />
+                    Delete Document
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          );
+        },
+        size: 24,
+        enableSorting: false,
+        enableHiding: false,
+      },
+    ],
+    [onViewDocument, onSignDocument, onDeleteDocument],
+  );
+
+  return columns;
+}
