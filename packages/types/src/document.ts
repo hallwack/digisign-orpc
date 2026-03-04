@@ -14,7 +14,7 @@ export const documentSchema = z.object({
 });
 
 // --- Request Schema ---
-export const documentSortFields = z.enum(["createdAt", "updatedAt", "title", "fileName"]);
+export const documentSortFields = z.enum(["createdAt", "signedAt", "updatedAt", "title", "fileName"]);
 
 export const documentInsertSchema = documentSchema.pick({
   title: true,
@@ -51,7 +51,9 @@ export const documentVerifySchema = z.object({
 });
 
 // --- Response Schema ---
-export const documentTableItemSchema = documentSchema;
+export const documentTableItemSchema = documentSchema.extend({
+  signedAt: z.date().nullable(),
+});
 
 export const documentDataTableResponseSchema = z.object({
   data: z.array(documentTableItemSchema),
