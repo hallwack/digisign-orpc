@@ -47,7 +47,7 @@ export function createTableParamsHook<K extends string, Extra extends Record<str
     // Hanya READ dari URL, tidak menulis sendiri
     // useDataTable yang bertanggung jawab menulis page/perPage/sort/filters
     const [page] = useQueryState("page", parseAsInteger.withDefault(1));
-    const [perPage] = useQueryState("perPage", parseAsInteger.withDefault(10));
+    const [perPage] = useQueryState("perPage", parseAsInteger.withDefault(5));
     const [createdAt] = useQueryState("createdAt", parseAsArrayOf(parseAsInteger).withDefault([]));
     const [sort] = useQueryState("sort", {
       parse: (v) => {
