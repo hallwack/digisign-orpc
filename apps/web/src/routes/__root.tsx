@@ -1,15 +1,11 @@
 import { createORPCClient } from "@orpc/client";
-import { createTanstackQueryUtils } from "@orpc/tanstack-query";
 import type { QueryClient } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { HeadContent, Outlet, createRootRouteWithContext } from "@tanstack/react-router";
-import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { useState } from "react";
 
 import type { AppRouterClient } from "@digisign/api/routers/index";
 
-import { ThemeProvider } from "@/components/theme-provider";
-import { Toaster } from "@/components/ui/sonner";
+import RootProvider from "@/providers";
 import { link, orpc } from "@/utils/orpc";
 
 import "../index.css";
@@ -45,13 +41,10 @@ function RootComponent() {
 
   return (
     <>
-      <HeadContent />
-      <ThemeProvider attribute="class" defaultTheme="dark" disableTransitionOnChange storageKey="vite-ui-theme">
-          <Outlet />
-        <Toaster richColors />
-      </ThemeProvider>
-      <TanStackRouterDevtools position="bottom-left" />
-      <ReactQueryDevtools position="bottom" buttonPosition="bottom-right" />
+      <RootProvider>
+        <HeadContent />
+        <Outlet />
+      </RootProvider>
     </>
   );
 }
