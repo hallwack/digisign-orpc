@@ -1,0 +1,204 @@
+import { and, asc, count, desc, eq, gte, ilike, lte } from "drizzle-orm";
+
+import type { KeyDataTableRequest, KeyDataTableResponse, SignatureMetadata } from "@digisign/types";
+
+import { db } from "..";
+import { combinedKeys, generateKeys, verifyEddsa, verifyRsa } from "../libs/key-libs";
+import { lowerSql } from "../libs/parse";
+import { generateId } from "../libs/random";
+import { parseSlug } from "../libs/slug";
+import { keyTable } from "../tables";
+
+export class KeyService {
+  static async getKeyDataTable(params: KeyDataTableRequest, userId: string): Promise<KeyDataTableResponse> {
+    try {
+      const offset = (params.page - 1) * params.perPage;
+
+      // Build where conditions
+      const whereConditions = [eq(keyTable.userId, userId)];
+
+      if (params.keyName) {
+        whereConditions.push(ilike(keyTable.keyName, `%${params.keyName}%`));
+      }
+
+      // Add created_at date range filter
+      if (params.createdAt.length > 0) {
+        if (params.createdAt[0]) {
+          const startDate = new Date(params.createdAt[0]);
+          startDate.setHours(0, 0, 0, 0);
+          whereConditions.push(gte(keyTable.createdAt, startDate));
+        }
+
+        if (params.createdAt[1]) {
+          const endDate = new Date(params.createdAt[1]);
+          endDate.setHours(23, 59, 59, 999);
+          whereConditions.push(lte(keyTable.createdAt, endDate));
+        }
+      }
+
+      const where = and(...whereConditions);
+
+      // Build order by
+      const orderBy =
+        params.sort.length > 0
+          ? params.sort.map((item) => (item.desc ? desc(keyTable[item.id]) : asc(keyTable[item.id])))
+          : [desc(keyTable.createdAt)]; // Default sort by created_at desc
+
+      // Execute transaction to get both data and count
+      const result = await db.transaction(async (ctx) => {
+        const data = await ctx
+          .select({
+            id: keyTable.id,
+            userId: keyTable.userId,
+            keyName: keyTable.keyName,
+            publicKeyRsa: keyTable.publicKeyRsa,
+            publicKeyEddsa: keyTable.publicKeyEddsa,
+            createdAt: keyTable.createdAt,
+            revokedAt: keyTable.revokedAt,
+          })
+          .from(keyTable)
+          .where(where)
+          .orderBy(...orderBy)
+          .limit(params.perPage)
+          .offset(offset);
+
+        const totalResult = await ctx.select({ count: count() }).from(keyTable).where(where);
+
+        const total = totalResult[0]?.count ?? 0;
+
+        return { data, total };
+      });
+
+      const pageCount = Math.ceil(result.total / params.perPage);
+
+      return {
+        data: result.data.map((item) => ({
+          ...item,
+          createdAt: item.createdAt ?? null,
+        })),
+        pageCount,
+        total: result.total,
+        page: params.page,
+        perPage: params.perPage,
+      };
+    } catch (error) {
+      console.error("Error fetching document datalist:", error);
+      throw new Error("Failed to fetch document datalist");
+    }
+  }
+
+  static async createKey(keyName: string, userId: string) {
+    const id = generateId(15);
+
+    const { publicKeyRsa, privateKeyRsa, publicKeyEddsa, privateKeyEddsa } = generateKeys();
+
+    const key = await db.insert(keyTable).values({
+      id,
+      keyName,
+      publicKeyRsa,
+      publicKeyEddsa,
+      userId,
+    });
+
+    if (!key) {
+      throw new Error("Failed to create key");
+    }
+
+    const sanitizedKeyName = keyName.replace(/\s+/g, "-");
+    const fileName = `${sanitizedKeyName}-private-keys.pem`;
+
+    const combinedPrivateKey = combinedKeys(id, privateKeyRsa, privateKeyEddsa);
+
+    return {
+      fileData: Buffer.from(combinedPrivateKey).toString("base64"),
+      fileName,
+      mimeType: "application/x-pem-file",
+    };
+  }
+
+  static async regenerateKey(params: string, userId: string) {
+    const { publicKeyRsa, privateKeyRsa, publicKeyEddsa, privateKeyEddsa } = generateKeys();
+
+    const deleteKey = await db.delete(keyTable).where(eq(keyTable.id, params)).returning({ keyName: keyTable.keyName });
+
+    if (!deleteKey) {
+      throw new Error("Key not found");
+    }
+
+    const id = generateId(15);
+
+    const key = await db.insert(keyTable).values({
+      id,
+      userId,
+      keyName: deleteKey[0]!.keyName,
+      publicKeyRsa,
+      publicKeyEddsa,
+    });
+
+    if (!key) {
+      throw new Error("Failed to create key");
+    }
+
+    const sanitizedKeyName = deleteKey[0]!.keyName.replace(/\s+/g, "-");
+    const fileName = `${sanitizedKeyName}-private-keys.pem`;
+
+    const combinedPrivateKey = combinedKeys(id, privateKeyRsa, privateKeyEddsa);
+
+    return {
+      fileData: Buffer.from(combinedPrivateKey).toString("base64"),
+      fileName,
+      mimeType: "application/x-pem-file",
+    };
+  }
+
+  static async deleteKey(params: string) {
+    const { id } = parseSlug(params);
+
+    if (!id) {
+      throw new Error("Invalid key ID");
+    }
+
+    const checkKey = await db.query.keyTable.findFirst({
+      where: (keyTable, { eq }) => eq(lowerSql(keyTable.id), id),
+    });
+
+    if (!checkKey) {
+      throw new Error("Key not found");
+    }
+
+    const deleteKey = await db
+      .delete(keyTable)
+      .where(eq(lowerSql(keyTable.id), id))
+      .returning();
+
+    if (!deleteKey) {
+      throw new Error("Invalid key ID");
+    }
+  }
+
+  static async verifyKey({ documentHash, documentId, rsaSignature, eddsaSignature }: SignatureMetadata) {
+    const signature = await db.query.signatureTable.findFirst({
+      where: (signatureTable, { eq }) => eq(signatureTable.documentId, documentId),
+    });
+
+    if (!signature) {
+      throw new Error("Signature not found");
+    }
+
+    const key = await db.query.keyTable.findFirst({
+      where: (keyTable, { eq }) => eq(keyTable.id, signature.keyId),
+    });
+
+    const validRsa = verifyRsa(documentHash, rsaSignature, key!.publicKeyRsa);
+
+    const validEddsa = verifyEddsa(documentHash, eddsaSignature, key!.publicKeyEddsa);
+
+    return {
+      validRsa,
+      validEddsa,
+      overallValid: validRsa && validEddsa,
+      keyId: key?.id || null,
+      keyName: key?.keyName || null,
+    };
+  }
+}
