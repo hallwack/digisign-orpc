@@ -1,10 +1,14 @@
-import { join, resolve } from "node:path";
+import { join } from "node:path";
 
-import type { DocumentSignSchema } from "@digisign/types";
+import type { DocumentFileUploadSchema, DocumentSignSchema } from "@digisign/types";
 
 import { db } from "..";
-import { parsePemSections } from "../libs/key-libs";
+import { getDocumentByName } from "../libs/document";
+import { parsePemSections, signEddsa, signRsa } from "../libs/key-libs";
+import { generateId } from "../libs/random";
+import { appendSignature, verifyDocumentSignature } from "../libs/signature";
 import { convertToSlug } from "../libs/slug";
+import { signatureTable } from "../tables";
 
 export class SignatureService {
   static async signDocument(form: DocumentSignSchema) {
@@ -52,9 +56,7 @@ export class SignatureService {
     });
 
     if (!signature) {
-      throw new HTTPException(500, {
-        message: "Failed to sign document",
-      });
+      throw new Error("Failed to sign document");
     }
 
     return {
