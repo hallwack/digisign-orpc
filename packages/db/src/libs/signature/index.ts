@@ -1,10 +1,11 @@
 import path from "node:path";
 
-import { SUPPORTED_EXTENSIONS } from "./constant";
-import { isSupportedExtension } from "./encoder";
-import { appendOfficeFileMetadata, appendPdfMetadata } from "./signer";
-import { extractOfficeMetadata, extractPdfMetadata } from "./verifier";
 import type { DocumentVerificationResult, SignatureMetadata } from "@digisign/types";
+
+import { SUPPORTED_EXTENSIONS } from "./constant";
+import { OfficeSignature } from "./office";
+import { PdfSignature } from "./pdf";
+import { isSupportedExtension, validateSignatureMetadata } from "./utils";
 
 export async function verifyDocumentSignature(file: File): Promise<DocumentVerificationResult> {
   try {
@@ -23,12 +24,12 @@ export async function verifyDocumentSignature(file: File): Promise<DocumentVerif
 
     switch (extension) {
       case ".pdf":
-        metadata = await extractPdfMetadata(fileBuffer);
+        metadata = await PdfSignature.extractMetadata(fileBuffer);
         break;
 
       case ".docx":
       case ".xlsx":
-        metadata = await extractOfficeMetadata(fileBuffer);
+        metadata = await OfficeSignature.extractMetadata(fileBuffer);
         break;
 
       default:
@@ -37,24 +38,16 @@ export async function verifyDocumentSignature(file: File): Promise<DocumentVerif
 
     // Check if the metadata contains signature information
     if (metadata) {
-      const requiredSignatureFields = ["documentHash", "documentId", "rsaSignature", "eddsaSignature", "createdAt"];
+      const normalizeMetadata: Record<string, string> = {};
+      for (const [key, value] of Object.entries(metadata)) {
+        const camelCaseKey = key.charAt(0).toLowerCase() + key.slice(1);
+        normalizeMetadata[camelCaseKey] = value;
+      }
+      const validationResult = validateSignatureMetadata(normalizeMetadata);
 
-      // Check for both camelCase and PascalCase variants
-      const hasAllFields = requiredSignatureFields.every((field) => {
-        const camelCase = metadata![field];
-        const pascalCase = metadata![field.charAt(0).toUpperCase() + field.slice(1)];
-        return (camelCase && typeof camelCase === "string") || (pascalCase && typeof pascalCase === "string");
-      });
-
-      if (hasAllFields) {
+      if (validationResult.hasSignature && validationResult.signatureData) {
         hasSignature = true;
-        signatureData = {
-          documentHash: metadata.documentHash || metadata.DocumentHash,
-          documentId: metadata.documentId || metadata.DocumentId,
-          rsaSignature: metadata.rsaSignature || metadata.RSASignature,
-          eddsaSignature: metadata.eddsaSignature || metadata.EDDSASignature,
-          createdAt: metadata.createdAt || metadata.CreatedAt,
-        };
+        signatureData = validationResult.signatureData;
       }
     }
 
@@ -99,12 +92,12 @@ export async function appendSignature(filePath: string, docName: string, metaDat
 
     switch (extension) {
       case ".pdf":
-        await appendPdfMetadata(filePath, docName, metaData);
+        await PdfSignature.appendMetadata(filePath, docName, metaData);
         break;
 
       case ".docx":
       case ".xlsx":
-        await appendOfficeFileMetadata(filePath, docName, metaData);
+        await OfficeSignature.appendMetadata(filePath, docName, metaData);
         break;
 
       default:
