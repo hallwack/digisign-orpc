@@ -46,6 +46,10 @@ export const documentSignSchema = z.object({
   privateKey: documentKeySchema,
 });
 
+export const documentFileUploadSchema = z.object({
+  file: documentFileSchema,
+})
+
 export const documentVerifySchema = z.object({
   document: documentFileSchema,
 });
@@ -88,4 +92,5 @@ export type DocumentDataTableResponse = z.infer<typeof documentDataTableResponse
 export type DocumentSignResponse = z.infer<typeof documentSignResponseSchema>;
 export type DocumentSignSchema = z.infer<typeof documentSignSchema>;
 export type DocumentUploadSchema = z.infer<typeof documentUploadSchema>;
+export type DocumentFileUploadSchema = z.infer<typeof documentFileUploadSchema>;
 export type GetAllDocumentResponse = z.infer<typeof getAllDocumentResponseSchema>;
