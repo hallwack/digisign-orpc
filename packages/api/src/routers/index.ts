@@ -2,6 +2,7 @@ import type { RouterClient } from "@orpc/server";
 
 import { protectedProcedure, publicProcedure } from "../index";
 import { documentRouter } from "./document";
+import { keyRouter } from "./key";
 
 const otherRouter = {
   healthCheck: publicProcedure.handler(() => {
@@ -18,6 +19,7 @@ const otherRouter = {
 export const appRouter = {
   ...otherRouter,
   document: documentRouter,
+  key: keyRouter,
 };
 
 export type AppRouter = typeof appRouter;
