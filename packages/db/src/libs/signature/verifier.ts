@@ -2,7 +2,7 @@ import { PDFDocument, PDFName, PDFRawStream } from "pdf-lib";
 import PizZip from "pizzip";
 import { parseStringPromise } from "xml2js";
 
-import type { CustomXmlStructure } from "@digisign/types";
+import type { CustomXmlStructureSchema } from "@digisign/types";
 
 import { decodeMetadataStreamToXml } from "./decoder";
 import { getExistingCustomXml } from "./signer";
@@ -81,7 +81,7 @@ export async function extractPdfMetadata(fileBuffer: Buffer): Promise<Record<str
   }
 }
 
-export function parseOfficeMetadata(customXML: CustomXmlStructure): Record<string, string> {
+export function parseOfficeMetadata(customXML: CustomXmlStructureSchema): Record<string, string> {
   const properties = customXML.Properties.property || [];
 
   const metadata: Record<string, string> = {};

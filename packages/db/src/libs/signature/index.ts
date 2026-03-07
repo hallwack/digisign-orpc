@@ -1,13 +1,13 @@
 import path from "node:path";
 
-import type { DocumentVerificationResult, SignatureMetadata } from "@digisign/types";
+import type { DocumentVerificationResultSchema, SignatureMetadataSchema } from "@digisign/types";
 
 import { SUPPORTED_EXTENSIONS } from "./constant";
 import { OfficeSignature } from "./office";
 import { PdfSignature } from "./pdf";
 import { isSupportedExtension, validateSignatureMetadata } from "./utils";
 
-export async function verifyDocumentSignature(file: File): Promise<DocumentVerificationResult> {
+export async function verifyDocumentSignature(file: File): Promise<DocumentVerificationResultSchema> {
   try {
     const fileBuffer = Buffer.from(await file.arrayBuffer());
     const extension = path.extname(file.name).toLowerCase();
@@ -20,7 +20,7 @@ export async function verifyDocumentSignature(file: File): Promise<DocumentVerif
 
     let metadata: Record<string, string> | null = null;
     let hasSignature = false;
-    let signatureData: SignatureMetadata | undefined;
+    let signatureData: SignatureMetadataSchema | undefined;
 
     switch (extension) {
       case ".pdf":
@@ -62,7 +62,7 @@ export async function verifyDocumentSignature(file: File): Promise<DocumentVerif
   }
 }
 
-export async function appendSignature(filePath: string, docName: string, metaData: SignatureMetadata) {
+export async function appendSignature(filePath: string, docName: string, metaData: SignatureMetadataSchema) {
   try {
     if (!filePath || !docName || !metaData) {
       throw new Error("Missing required parameters");
@@ -76,7 +76,7 @@ export async function appendSignature(filePath: string, docName: string, metaDat
       );
     }
 
-    const requiredFields: (keyof SignatureMetadata)[] = [
+    const requiredFields: (keyof SignatureMetadataSchema)[] = [
       "documentHash",
       "documentId",
       "rsaSignature",

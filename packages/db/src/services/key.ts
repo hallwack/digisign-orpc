@@ -1,6 +1,6 @@
 import { and, asc, count, desc, eq, gte, ilike, lte } from "drizzle-orm";
 
-import type { KeyDataTableRequest, KeyDataTableResponse, SignatureMetadata } from "@digisign/types";
+import type { KeyDataTableRequestSchema, KeyDataTableResponseSchema, SignatureMetadataSchema } from "@digisign/types";
 
 import { db } from "..";
 import { combinedKeys, generateKeys, verifyEddsa, verifyRsa } from "../libs/key-libs";
@@ -10,7 +10,7 @@ import { parseSlug } from "../libs/slug";
 import { keyTable } from "../tables";
 
 export class KeyService {
-  static async getKeyDataTable(params: KeyDataTableRequest, userId: string): Promise<KeyDataTableResponse> {
+  static async getKeyDataTable(params: KeyDataTableRequestSchema, userId: string): Promise<KeyDataTableResponseSchema> {
     try {
       const offset = (params.page - 1) * params.perPage;
 
@@ -100,9 +100,7 @@ export class KeyService {
       userId,
     });
 
-    if (!key) {
-      throw new Error("Failed to create key");
-    }
+    if (!key) throw new Error("Failed to create key");
 
     const sanitizedKeyName = keyName.replace(/\s+/g, "-");
     const fileName = `${sanitizedKeyName}-private-keys.pem`;
@@ -116,14 +114,12 @@ export class KeyService {
     };
   }
 
-  static async regenerateKey(params: string, userId: string) {
+  static async regenerateKey(keyId: string, userId: string) {
     const { publicKeyRsa, privateKeyRsa, publicKeyEddsa, privateKeyEddsa } = generateKeys();
 
-    const deleteKey = await db.delete(keyTable).where(eq(keyTable.id, params)).returning({ keyName: keyTable.keyName });
+    const deleteKey = await db.delete(keyTable).where(eq(keyTable.id, keyId)).returning({ keyName: keyTable.keyName });
 
-    if (!deleteKey) {
-      throw new Error("Key not found");
-    }
+    if (!deleteKey) throw new Error("Key not found");
 
     const id = generateId(15);
 
@@ -135,9 +131,7 @@ export class KeyService {
       publicKeyEddsa,
     });
 
-    if (!key) {
-      throw new Error("Failed to create key");
-    }
+    if (!key) throw new Error("Failed to create key");
 
     const sanitizedKeyName = deleteKey[0]!.keyName.replace(/\s+/g, "-");
     const fileName = `${sanitizedKeyName}-private-keys.pem`;
@@ -176,7 +170,7 @@ export class KeyService {
     }
   }
 
-  static async verifyKey({ documentHash, documentId, rsaSignature, eddsaSignature }: SignatureMetadata) {
+  static async verifyKey({ documentHash, documentId, rsaSignature, eddsaSignature }: SignatureMetadataSchema) {
     const signature = await db.query.signatureTable.findFirst({
       where: (signatureTable, { eq }) => eq(signatureTable.documentId, documentId),
     });

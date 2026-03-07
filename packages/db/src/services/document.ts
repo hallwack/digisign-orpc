@@ -2,7 +2,7 @@ import { SQL, and, asc, count, desc, eq, gte, ilike, lte } from "drizzle-orm";
 import { mkdirSync, rmSync } from "node:fs";
 import { join, resolve } from "node:path";
 
-import type { DocumentDataTableRequest, DocumentDataTableResponse, DocumentUploadSchema } from "@digisign/types";
+import type { DocumentDataTableRequestSchema, DocumentDataTableResponseSchema, DocumentUploadSchema } from "@digisign/types";
 
 import { db } from "..";
 import { directoryExists } from "../libs/directory";
@@ -81,9 +81,9 @@ export class DocumentService {
   }
 
   static async getDocumentDataTable(
-    params: DocumentDataTableRequest,
+    params: DocumentDataTableRequestSchema,
     userId: string,
-  ): Promise<DocumentDataTableResponse> {
+  ): Promise<DocumentDataTableResponseSchema> {
     try {
       const offset = (params.page - 1) * params.perPage;
 

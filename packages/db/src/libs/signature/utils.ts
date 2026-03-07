@@ -1,4 +1,4 @@
-import { type SignatureMetadata, signatureMetadataSchema } from "@digisign/types";
+import { type SignatureMetadataSchema, signatureMetadataSchema } from "@digisign/types";
 
 import { SUPPORTED_EXTENSIONS } from "./constant";
 
@@ -12,7 +12,7 @@ export function createSignedFileName(originalName: string, extension: string): s
 
 export function validateSignatureMetadata(metadata: Record<string, string>): {
   hasSignature: boolean;
-  signatureData?: SignatureMetadata;
+  signatureData?: SignatureMetadataSchema;
 } {
   const result = signatureMetadataSchema.safeParse(metadata);
 

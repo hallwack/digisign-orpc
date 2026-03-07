@@ -6,10 +6,10 @@ import { Builder, parseStringPromise } from "xml2js";
 
 import { CUSTOM_XML_PATH, OFFICE_NAMESPACES, SUPPORTED_EXTENSIONS } from "./constant";
 import { createCustomProperty, createSignedFileName, getNextPid, isSupportedExtension } from "./encoder";
-import type { CustomOfficeProperty, CustomXmlStructure, SignatureMetadata } from "@digisign/types";
+import type { CustomOfficePropertySchema, CustomXmlStructureSchema, SignatureMetadataSchema } from "@digisign/types";
 import { getDocument, separateFilenameWithExt } from "../document";
 
-export async function generatePdfMetadata(metaData: SignatureMetadata): Promise<string> {
+export async function generatePdfMetadata(metaData: SignatureMetadataSchema): Promise<string> {
   try {
     const xmlTemplate = {
       "x:xmpmeta": {
@@ -51,7 +51,7 @@ export async function generatePdfMetadata(metaData: SignatureMetadata): Promise<
   }
 }
 
-export async function appendPdfMetadata(filePath: string, docName: string, metaData: SignatureMetadata) {
+export async function appendPdfMetadata(filePath: string, docName: string, metaData: SignatureMetadataSchema) {
   try {
     const [name, extension] = separateFilenameWithExt(docName);
     const fileName = createSignedFileName(name, extension);
@@ -79,9 +79,9 @@ export async function appendPdfMetadata(filePath: string, docName: string, metaD
   }
 }
 
-export async function generateOfficeMetadata(metaData: SignatureMetadata): Promise<string> {
+export async function generateOfficeMetadata(metaData: SignatureMetadataSchema): Promise<string> {
   try {
-    const customXmlTemplate: CustomXmlStructure = {
+    const customXmlTemplate: CustomXmlStructureSchema = {
       Properties: {
         $: {
           xmlns: "http://schemas.openxmlformats.org/officeDocument/2006/custom-properties",
@@ -92,7 +92,7 @@ export async function generateOfficeMetadata(metaData: SignatureMetadata): Promi
     };
 
     let pid = 2;
-    const properties: CustomOfficeProperty[] = [];
+    const properties: CustomOfficePropertySchema[] = [];
 
     for (const [key, value] of Object.entries(metaData)) {
       properties.push(createCustomProperty(pid++, key, value));
@@ -107,8 +107,8 @@ export async function generateOfficeMetadata(metaData: SignatureMetadata): Promi
   }
 }
 
-export async function getExistingCustomXml(zip: PizZip): Promise<CustomXmlStructure> {
-  const defaultStructure: CustomXmlStructure = {
+export async function getExistingCustomXml(zip: PizZip): Promise<CustomXmlStructureSchema> {
+  const defaultStructure: CustomXmlStructureSchema = {
     Properties: {
       $: {
         xmlns: OFFICE_NAMESPACES.CUSTOM_PROPS,
@@ -144,7 +144,7 @@ export async function getExistingCustomXml(zip: PizZip): Promise<CustomXmlStruct
       parsedXml.Properties.$ = defaultStructure.Properties.$;
     }
 
-    return parsedXml as CustomXmlStructure;
+    return parsedXml as CustomXmlStructureSchema;
   } catch (error) {
     console.warn(`Failed to parse existing custom.xml, using default structure: ${error}`);
     return defaultStructure;
@@ -154,7 +154,7 @@ export async function getExistingCustomXml(zip: PizZip): Promise<CustomXmlStruct
 export async function appendOfficeFileMetadata(
   filePath: string,
   docName: string,
-  metaData: SignatureMetadata,
+  metaData: SignatureMetadataSchema,
 ): Promise<void> {
   try {
     const [name, extension] = separateFilenameWithExt(docName);
@@ -195,7 +195,7 @@ export async function appendOfficeFileMetadata(
   }
 }
 
-export async function appendSignature(filePath: string, docName: string, metaData: SignatureMetadata) {
+export async function appendSignature(filePath: string, docName: string, metaData: SignatureMetadataSchema) {
   try {
     if (!filePath || !docName || !metaData) {
       throw new Error("Missing required parameters");
@@ -209,7 +209,7 @@ export async function appendSignature(filePath: string, docName: string, metaDat
       );
     }
 
-    const requiredFields: (keyof SignatureMetadata)[] = [
+    const requiredFields: (keyof SignatureMetadataSchema)[] = [
       "documentHash",
       "documentId",
       "rsaSignature",

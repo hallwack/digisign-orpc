@@ -48,7 +48,7 @@ export const documentSignSchema = z.object({
 
 export const documentFileUploadSchema = z.object({
   file: documentFileSchema,
-})
+});
 
 export const documentVerifySchema = z.object({
   document: documentFileSchema,
@@ -86,11 +86,11 @@ export const getAllDocumentResponseSchema = z.array(
   }),
 );
 
-export type DocumentTableItem = z.infer<typeof documentTableItemSchema>;
-export type DocumentDataTableRequest = z.infer<typeof documentDataTableRequestSchema>;
-export type DocumentDataTableResponse = z.infer<typeof documentDataTableResponseSchema>;
-export type DocumentSignResponse = z.infer<typeof documentSignResponseSchema>;
+export type DocumentTableItemSchema = z.infer<typeof documentTableItemSchema>;
+export type DocumentDataTableRequestSchema = z.infer<typeof documentDataTableRequestSchema>;
+export type DocumentDataTableResponseSchema = z.infer<typeof documentDataTableResponseSchema>;
+export type DocumentSignResponseSchema = z.infer<typeof documentSignResponseSchema>;
 export type DocumentSignSchema = z.infer<typeof documentSignSchema>;
 export type DocumentUploadSchema = z.infer<typeof documentUploadSchema>;
 export type DocumentFileUploadSchema = z.infer<typeof documentFileUploadSchema>;
-export type GetAllDocumentResponse = z.infer<typeof getAllDocumentResponseSchema>;
+export type GetAllDocumentResponseSchema = z.infer<typeof getAllDocumentResponseSchema>;

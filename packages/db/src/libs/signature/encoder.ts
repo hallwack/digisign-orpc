@@ -1,4 +1,4 @@
-import type { CustomOfficeProperty } from "@digisign/types";
+import type { CustomOfficePropertySchema } from "@digisign/types";
 import { CUSTOM_PROPERTY_FMTID, SUPPORTED_EXTENSIONS } from "./constant";
 
 export function isSupportedExtension(extension: string): extension is (typeof SUPPORTED_EXTENSIONS)[number] {
@@ -9,7 +9,7 @@ export function createSignedFileName(originalName: string, extension: string): s
   return `${originalName}-signed.${extension}`;
 }
 
-export function createCustomProperty(id: number, name: string, value: string): CustomOfficeProperty {
+export function createCustomProperty(id: number, name: string, value: string): CustomOfficePropertySchema {
   return {
     $: {
       fmtid: CUSTOM_PROPERTY_FMTID,
@@ -20,7 +20,7 @@ export function createCustomProperty(id: number, name: string, value: string): C
   };
 }
 
-export function getNextPid(existingProperties: CustomOfficeProperty[]): number {
+export function getNextPid(existingProperties: CustomOfficePropertySchema[]): number {
   if (existingProperties.length === 0) {
     return 2;
   }

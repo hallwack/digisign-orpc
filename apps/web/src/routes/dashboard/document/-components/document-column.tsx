@@ -2,7 +2,7 @@ import { type ColumnDef } from "@tanstack/react-table";
 import { EyeIcon, KeyIcon, MoreHorizontalIcon, TrashIcon } from "lucide-react";
 import { useMemo } from "react";
 
-import type { DocumentTableItem } from "@digisign/types";
+import type { DocumentTableItemSchema } from "@digisign/types";
 
 import { DataTableColumnHeader } from "@/components/data-table-column-header";
 import { Button } from "@/components/ui/button";
@@ -22,7 +22,7 @@ interface UseDocumentColumnsProps {
 }
 
 export function useDocumentColumns({ onViewDocument, onSignDocument, onDeleteDocument }: UseDocumentColumnsProps = {}) {
-  const columns = useMemo<ColumnDef<DocumentTableItem>[]>(
+  const columns = useMemo<ColumnDef<DocumentTableItemSchema>[]>(
     () => [
       {
         id: "id",

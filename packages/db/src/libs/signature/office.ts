@@ -3,7 +3,7 @@ import { join } from "node:path";
 import PizZip from "pizzip";
 import { Builder, parseStringPromise } from "xml2js";
 
-import type { CustomOfficeProperty, CustomXmlStructure, SignatureMetadata } from "@digisign/types";
+import type { CustomOfficePropertySchema, CustomXmlStructureSchema, SignatureMetadataSchema } from "@digisign/types";
 
 import { getDocument, separateFilenameWithExt } from "../document";
 import { CUSTOM_PROPERTY_FMTID, CUSTOM_XML_PATH, OFFICE_NAMESPACES } from "./constant";
@@ -28,7 +28,7 @@ export const OfficeSignature = {
     return metadata;
   },
 
-  async appendMetadata(filePath: string, docName: string, metaData: SignatureMetadata) {
+  async appendMetadata(filePath: string, docName: string, metaData: SignatureMetadataSchema) {
     const [name, extension] = separateFilenameWithExt(docName);
     const fileName = createSignedFileName(name!, extension!);
 
@@ -62,21 +62,21 @@ export const OfficeSignature = {
     await fs.writeFile(join(filePath, fileName), newFileBuffer);
   },
 
-  getNextPid(existingProperties: CustomOfficeProperty[]): number {
+  getNextPid(existingProperties: CustomOfficePropertySchema[]): number {
     if (existingProperties.length === 0) return 2;
     const maxPid = Math.max(...existingProperties.map((p) => parseInt(p.$.pid.toString())));
     return maxPid + 1;
   },
 
-  createCustomProperty(id: number, name: string, value: string): CustomOfficeProperty {
+  createCustomProperty(id: number, name: string, value: string): CustomOfficePropertySchema {
     return {
       $: { fmtid: CUSTOM_PROPERTY_FMTID, pid: id, name: name },
       "vt:lpwstr": [value],
     };
   },
 
-  async getExistingCustomXml(zip: PizZip): Promise<CustomXmlStructure> {
-    const defaultStructure: CustomXmlStructure = {
+  async getExistingCustomXml(zip: PizZip): Promise<CustomXmlStructureSchema> {
+    const defaultStructure: CustomXmlStructureSchema = {
       Properties: {
         $: {
           xmlns: OFFICE_NAMESPACES.CUSTOM_PROPS,
@@ -112,7 +112,7 @@ export const OfficeSignature = {
         parsedXml.Properties.$ = defaultStructure.Properties.$;
       }
 
-      return parsedXml as CustomXmlStructure;
+      return parsedXml as CustomXmlStructureSchema;
     } catch (error) {
       console.warn(`Failed to parse existing custom.xml, using default structure: ${error}`);
       return defaultStructure;

@@ -1,10 +1,10 @@
 import { z } from "zod";
 
-import { createPaginationSchema, dateQuerySchema } from "./utils";
+import { createPaginationSchema, dateQuerySchema, idSchema } from "./utils";
 
 export const keySchema = z.object({
-  id: z.uuid(),
-  userId: z.uuid(),
+  id: idSchema,
+  userId: idSchema,
   keyName: z.string().min(1, "Key name is required"),
   publicKeyRsa: z.string().min(1),
   publicKeyEddsa: z.string().min(1),
@@ -25,6 +25,10 @@ export const keyInsertSchema = keySchema.pick({
   keyName: true,
 });
 
+export const keyRegenerateSchema = keySchema.pick({
+  id: true,
+});
+
 // --- Response Schema ---
 export const keyTableItemSchema = keySchema;
 
@@ -36,8 +40,8 @@ export const keyDataTableResponseSchema = z.object({
   perPage: z.number(),
 });
 
-export const createKeySchema = z.object({
-  keyName: z.string().min(1, { message: "Key name is required" }),
+export const createKeySchema = keySchema.pick({
+  keyName: true,
 });
 
 export const createKeyResponseSchema = z.object({
@@ -46,12 +50,13 @@ export const createKeyResponseSchema = z.object({
   mimeType: z.string().describe("MIME type of the file").default("application/x-pem-file"),
 });
 
-export const keyIdSchema = z.object({
-  id: z.string().min(1, { message: "Key ID is required" }),
+export const keyIdSchema = keySchema.pick({
+  id: true,
 });
 
-export type KeyTableItem = z.infer<typeof keyTableItemSchema>;
-export type KeyDataTableRequest = z.infer<typeof keyDataTableRequestSchema>;
-export type KeyDataTableResponse = z.infer<typeof keyDataTableResponseSchema>;
+export type KeyTableItemSchema = z.infer<typeof keyTableItemSchema>;
+export type KeyRegenerateSchema = z.infer<typeof keyRegenerateSchema>;
+export type KeyDataTableRequestSchema = z.infer<typeof keyDataTableRequestSchema>;
+export type KeyDataTableResponseSchema = z.infer<typeof keyDataTableResponseSchema>;
 export type CreateKeySchema = z.infer<typeof createKeySchema>;
 export type KeyIdSchema = z.infer<typeof keyIdSchema>;

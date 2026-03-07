@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import { z } from "zod";
 
 export const signatureMetadataSchema = z.object({
   documentHash: z.string(),
@@ -34,7 +34,7 @@ export const documentVerificationResultSchema = z.object({
   signatureData: signatureMetadataSchema.optional(),
 });
 
-export type SignatureMetadata = z.infer<typeof signatureMetadataSchema>;
-export type CustomOfficeProperty = z.infer<typeof customOfficePropertySchema>;
-export type CustomXmlStructure = z.infer<typeof customXmlStructureSchema>;
-export type DocumentVerificationResult = z.infer<typeof documentVerificationResultSchema>;
+export type SignatureMetadataSchema = z.infer<typeof signatureMetadataSchema>;
+export type CustomOfficePropertySchema = z.infer<typeof customOfficePropertySchema>;
+export type CustomXmlStructureSchema = z.infer<typeof customXmlStructureSchema>;
+export type DocumentVerificationResultSchema = z.infer<typeof documentVerificationResultSchema>;

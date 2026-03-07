@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { PDFDocument, PDFName, PDFRawStream, PDFString } from "pdf-lib";
 import { Builder, parseStringPromise } from "xml2js";
 
-import type { SignatureMetadata } from "@digisign/types";
+import type { SignatureMetadataSchema } from "@digisign/types";
 
 import { getDocument, separateFilenameWithExt } from "../document";
 import { createSignedFileName } from "./utils";
@@ -24,7 +24,7 @@ export const PdfSignature = {
     return xml ? this.parseXmpMetadata(xml) : null;
   },
 
-  async appendMetadata(filePath: string, docName: string, metaData: SignatureMetadata) {
+  async appendMetadata(filePath: string, docName: string, metaData: SignatureMetadataSchema) {
     const [name, extension] = separateFilenameWithExt(docName);
     const fileName = createSignedFileName(name!, extension!);
 
@@ -91,7 +91,7 @@ export const PdfSignature = {
     }
   },
 
-  async generateXmp(metaData: SignatureMetadata): Promise<string> {
+  async generateXmp(metaData: SignatureMetadataSchema): Promise<string> {
     try {
       const xmlTemplate = {
         "x:xmpmeta": {
