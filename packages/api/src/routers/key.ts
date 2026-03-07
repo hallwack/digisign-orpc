@@ -1,5 +1,5 @@
 import { KeyService } from "@digisign/db/services/key";
-import { keyDataTableRequestSchema, keyInsertSchema } from "@digisign/types";
+import { keyDataTableRequestSchema, keyInsertSchema, keyRegenerateSchema } from "@digisign/types";
 
 import { protectedProcedure } from "..";
 
@@ -27,5 +27,18 @@ export const keyRouter = {
     .input(keyInsertSchema)
     .handler(async ({ input, context }) => {
       return KeyService.createKey(input.keyName, context.session.user.id);
+    }),
+  regenerate: protectedProcedure
+    .route({
+      path: "/key/regenerate",
+      method: "POST",
+      tags: ["Key"],
+      summary: "Regenerate Key",
+      description:
+        "Regenerate an existing key for documents. This will delete the existing key and create a new one with the same name.",
+    })
+    .input(keyRegenerateSchema)
+    .handler(async ({ input, context }) => {
+      return KeyService.regenerateKey(input.id, context.session.user.id);
     }),
 };
