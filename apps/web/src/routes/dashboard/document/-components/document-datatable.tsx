@@ -20,7 +20,11 @@ export default function DocumentDataTable() {
     }),
   );
 
-  const columns = useDocumentColumns();
+  const columns = useDocumentColumns({
+    onDeleteDocument: (id) => {
+      setDeleteDocumentId(id);
+    },
+  });
 
   const { table } = useDataTable({
     data: documentQuery?.data?.data || [],
