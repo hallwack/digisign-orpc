@@ -70,6 +70,7 @@ export const PdfSignature = {
       const signatureFields = [
         "digsig:documentHash",
         "digsig:documentId",
+        "digsig:keyId",
         "digsig:rsaSignature",
         "digsig:eddsaSignature",
         "digsig:createdAt",
@@ -111,6 +112,7 @@ export const PdfSignature = {
             },
             "digsig:documentHash": metaData.documentHash,
             "digsig:documentId": metaData.documentId,
+            "digsig:keyId": metaData.keyId,
             "digsig:rsaSignature": metaData.rsaSignature,
             "digsig:eddsaSignature": metaData.eddsaSignature,
             "digsig:createdAt": metaData.createdAt,
