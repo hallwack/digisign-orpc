@@ -79,6 +79,7 @@ export async function appendSignature(filePath: string, docName: string, metaDat
     const requiredFields: (keyof SignatureMetadataSchema)[] = [
       "documentHash",
       "documentId",
+      "keyId",
       "rsaSignature",
       "eddsaSignature",
       "createdAt",
