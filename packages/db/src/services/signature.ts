@@ -4,7 +4,6 @@ import type { DocumentFileUploadSchema, DocumentSignSchema } from "@digisign/typ
 
 import { db } from "..";
 import { getDocumentByName } from "../libs/document";
-import { parsePemSections, signEddsa, signRsa } from "../libs/key-libs";
 import { generateId } from "../libs/random";
 import { appendSignature, verifyDocumentSignature } from "../libs/signature";
 import { convertToSlug } from "../libs/slug";
@@ -12,25 +11,11 @@ import { signatureTable } from "../tables";
 
 export class SignatureService {
   static async signDocument(form: DocumentSignSchema) {
-    const privateKeyFile = Buffer.from(await form.privateKey.arrayBuffer()).toString("utf8");
-
-    const { id: keyId, eddsaKey, rsaKey } = parsePemSections(privateKeyFile);
-
-    if (!keyId) {
-      throw new Error("Invalid key ID");
-    }
-
-    if (!rsaKey || !eddsaKey) {
-      throw new Error("Invalid keys");
-    }
-
     const document = await db.query.documentTable.findFirst({
       where: (documentTable, { eq }) => eq(documentTable.id, form.documentId),
     });
 
-    if (!document) {
-      throw new Error("Document not found");
-    }
+    if (!document) throw new Error("Document not found");
 
     const dirName = convertToSlug(`${document.title}-${document.id}`);
 
@@ -39,8 +24,8 @@ export class SignatureService {
     await appendSignature(filePath, document.fileName, {
       documentHash: document.hash,
       documentId: document.id,
-      eddsaSignature: signEddsa(document.hash, eddsaKey),
-      rsaSignature: signRsa(document.hash, rsaKey),
+      eddsaSignature: form.eddsaPrivateKey,
+      rsaSignature: form.rsaPrivateKey,
       createdAt: new Date().toISOString(),
     });
 
@@ -48,16 +33,14 @@ export class SignatureService {
 
     const signature = await db.insert(signatureTable).values({
       id: generateId(15),
-      keyId,
+      keyId: form.keyId,
       documentId: document.id,
-      rsaSignature: rsaKey,
-      eddsaSignature: eddsaKey,
+      rsaSignature: form.rsaPrivateKey,
+      eddsaSignature: form.eddsaPrivateKey,
       signedAt: new Date(),
     });
 
-    if (!signature) {
-      throw new Error("Failed to sign document");
-    }
+    if (!signature) throw new Error("Failed to sign document");
 
     return {
       fileData: Buffer.from(documentContent).toString("base64"),
