@@ -20,11 +20,11 @@ export default function DocumentDataTable() {
     }),
   );
 
-  const columnActions = useDocumentColumns();
+  const columns = useDocumentColumns();
 
   const { table } = useDataTable({
     data: documentQuery?.data?.data || [],
-    columns: columnActions,
+    columns,
     pageCount: documentQuery?.data?.pageCount ?? 0,
     initialState: {
       columnPinning: { right: ["actions"] },
