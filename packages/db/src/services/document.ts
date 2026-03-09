@@ -17,7 +17,7 @@ export class DocumentService {
     const documentHash = await getDocumentHash(form.file);
     const storagePath = resolve(process.cwd(), "../../storage/documents");
 
-    const documentId = generateId(15);
+    const documentId = generateId();
     const cleanTitleSlug = convertToSlug(form.title);
     const titleName = convertToSlug(`${cleanTitleSlug}-${documentId}`);
 

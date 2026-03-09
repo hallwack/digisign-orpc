@@ -88,7 +88,7 @@ export class KeyService {
   }
 
   static async createKey(keyName: string, userId: string) {
-    const id = generateId(15);
+    const id = generateId();
 
     const { publicKeyRsa, privateKeyRsa, publicKeyEddsa, privateKeyEddsa } = generateKeys();
 
@@ -121,7 +121,7 @@ export class KeyService {
 
     if (!deleteKey) throw new Error("Key not found");
 
-    const id = generateId(15);
+    const id = generateId();
 
     const key = await db.insert(keyTable).values({
       id,
