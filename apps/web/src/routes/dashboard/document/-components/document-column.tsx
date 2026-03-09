@@ -28,7 +28,7 @@ export function useDocumentColumns({ onViewDocument, onSignDocument, onDeleteDoc
         id: "id",
         accessorKey: "id",
         header: ({ column }) => <DataTableColumnHeader column={column} title="Document ID" />,
-        cell: ({ row }) => <div>{row.getValue("id")}</div>,
+        cell: ({ row }) => <div>{(row.getValue("id") as string).slice(0, 10).padEnd(15, "*")}</div>,
         enableSorting: false,
         enableHiding: false,
       },
