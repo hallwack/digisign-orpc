@@ -9,7 +9,7 @@ import { authClient } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/dashboard")({
   component: DashboardPageComponent,
-  /* beforeLoad: async () => {
+  beforeLoad: async () => {
     const session = await authClient.getSession();
     if (!session.data) {
       redirect({
@@ -18,7 +18,7 @@ export const Route = createFileRoute("/dashboard")({
       });
     }
     return { session };
-  }, */
+  },
 });
 
 function DashboardPageComponent() {
