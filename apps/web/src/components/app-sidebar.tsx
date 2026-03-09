@@ -52,7 +52,7 @@ export default function AppSidebar({ user }: { user: User | null }) {
                   <SidebarMenuItem key={subItem.title}>
                     <SidebarMenuButton
                       render={
-                        <Link to={subItem.url}>
+                        <Link to={subItem.url} preload={false}>
                           <subItem.icon className="mr-2" />
                           <span>{subItem.title}</span>
                         </Link>
