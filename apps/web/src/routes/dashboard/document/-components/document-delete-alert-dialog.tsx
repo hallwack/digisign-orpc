@@ -28,7 +28,7 @@ export default function DocumentDeleteAlertDialog({ id, onSuccess, ...props }: D
       onError: (error) => {
         console.error("Document delete failed:", error);
         toast.error("Document delete failed. Please try again.");
-      }
+      },
     }),
   );
 

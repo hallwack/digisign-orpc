@@ -87,7 +87,6 @@ export default function DocumentSignForm({ documents }: SignDocumentFormProps) {
                         name={field.name}
                         value={field.state.value}
                         onValueChange={(value) => {
-                          console.log(value);
                           field.handleChange(value ?? "");
                         }}
                         aria-invalid={isInvalid}

@@ -1,7 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { zodValidator } from "@tanstack/zod-adapter";
-
-import { documentDataTableRequestSchema } from "@digisign/types";
 
 import DocumentDataTable from "./-components/document-datatable";
 
