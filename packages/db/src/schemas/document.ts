@@ -161,6 +161,7 @@ export const getAllDocumentResponseSchema = z.array(
     userId: true,
     fileName: true,
     title: true,
+    hash: true,
   }),
 );
 
