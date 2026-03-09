@@ -271,6 +271,7 @@ export class DocumentService {
         userId: true,
         fileName: true,
         title: true,
+        hash: true,
       },
       where: (documentTable, { eq }) => eq(documentTable.userId, userId),
     });
