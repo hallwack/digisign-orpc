@@ -1,4 +1,4 @@
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 
 import type { DocumentFileUploadSchema, DocumentSignSchema } from "@digisign/types";
 
@@ -19,7 +19,9 @@ export class SignatureService {
 
     const dirName = convertToSlug(`${document.title}-${document.id}`);
 
-    const filePath = join("public", "documents", dirName);
+    const storagePath = resolve(process.cwd(), "../../storage/documents");
+
+    const filePath = join(storagePath, dirName);
 
     await appendSignature(filePath, document.fileName, {
       documentHash: document.hash,
@@ -33,7 +35,7 @@ export class SignatureService {
     const { name: documentName, content: documentContent } = await getDocumentByName(filePath, "signed");
 
     const signature = await db.insert(signatureTable).values({
-      id: generateId(15),
+      id: generateId(),
       keyId: form.keyId,
       documentId: document.id,
       rsaSignature: form.rsaPrivateKey,
