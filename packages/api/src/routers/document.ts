@@ -1,5 +1,11 @@
 import { DocumentService } from "@digisign/db/services/document";
-import { documentDataTableRequestSchema, documentIdSchema, documentUploadSchema } from "@digisign/types";
+import { SignatureService } from "@digisign/db/services/signature";
+import {
+  documentDataTableRequestSchema,
+  documentIdSchema,
+  documentSignSchema,
+  documentUploadSchema,
+} from "@digisign/types";
 
 import { protectedProcedure } from "..";
 
@@ -39,6 +45,19 @@ export const documentRouter = {
     .input(documentUploadSchema)
     .handler(async ({ input, context }) => {
       return DocumentService.uploadDocument(input, context.session.user.id);
+    }),
+  sign: protectedProcedure
+    .route({
+      path: "/document/sign",
+      method: "POST",
+      inputStructure: "detailed",
+      tags: ["Document"],
+      summary: "Sign Document",
+      description: "Sign a document by ID",
+    })
+    .input(documentSignSchema)
+    .handler(async ({ input }) => {
+      return SignatureService.signDocument(input);
     }),
   delete: protectedProcedure
     .route({
