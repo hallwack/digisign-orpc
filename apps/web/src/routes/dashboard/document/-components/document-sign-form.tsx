@@ -1,25 +1,66 @@
 import { useForm } from "@tanstack/react-form";
+import { useMutation } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
+import { toast } from "sonner";
 
-import { type GetAllDocumentResponse, documentSignSchema } from "@digisign/db/schemas/document";
+import { type GetAllDocumentResponseSchema, documentSignFormSchema } from "@digisign/types";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { parsePemSections, signEddsa, signRsa } from "@/lib/signer";
+import { orpc } from "@/utils/orpc";
 
 interface SignDocumentFormProps {
-  documents: GetAllDocumentResponse;
+  documents: GetAllDocumentResponseSchema;
 }
 
 export default function DocumentSignForm({ documents }: SignDocumentFormProps) {
+  const navigate = useNavigate();
+  const mutation = useMutation(
+    orpc.document.sign.mutationOptions({
+      onSuccess: () => {
+        toast.success("Document signed successfully.");
+        navigate({ to: "/dashboard/document" });
+      },
+      onError: (error) => {
+        console.error("Document signing failed:", error);
+        toast.error("Document signing failed. Please try again.");
+      },
+    }),
+  );
+
   const form = useForm({
     defaultValues: {
       documentId: "",
-      privateKey: null as unknown as File,
+      privateKeyFile: null as unknown as File,
     },
     validators: {
-      onSubmit: documentSignSchema,
+      onSubmit: documentSignFormSchema,
+    },
+    onSubmit: async ({ value }) => {
+      const selectedDocument = documents.find((doc) => doc.id === value.documentId);
+      if (!selectedDocument) throw new Error("Document not found!");
+      const documentHash = selectedDocument.hash;
+
+      const privateKeyFile = await value.privateKeyFile.text();
+      const { id: keyId, eddsaKey, rsaKey } = parsePemSections(privateKeyFile);
+
+      if (!keyId) throw new Error("Invalid key ID");
+      if (!rsaKey || !eddsaKey) throw new Error("Invalid keys");
+
+      const eddsaSignature = signEddsa(documentHash, eddsaKey);
+      const rsaSignature = signRsa(documentHash, rsaKey);
+
+      mutation.mutate({
+        documentId: value.documentId,
+        keyId,
+        hash: documentHash,
+        rsaPrivateKey: rsaSignature,
+        eddsaPrivateKey: eddsaSignature,
+      });
     },
   });
 
@@ -27,7 +68,13 @@ export default function DocumentSignForm({ documents }: SignDocumentFormProps) {
     <div className="flex flex-col gap-4">
       <Card>
         <CardContent>
-          <form className="flex flex-col gap-6">
+          <form
+            className="flex flex-col gap-6"
+            onSubmit={(e) => {
+              e.preventDefault();
+              form.handleSubmit();
+            }}
+          >
             <FieldGroup>
               <form.Field
                 name="documentId"
@@ -39,7 +86,10 @@ export default function DocumentSignForm({ documents }: SignDocumentFormProps) {
                       <Select
                         name={field.name}
                         value={field.state.value}
-                        onValueChange={(value) => field.handleChange(value ?? "")}
+                        onValueChange={(value) => {
+                          console.log(value);
+                          field.handleChange(value ?? "");
+                        }}
                         aria-invalid={isInvalid}
                       >
                         <SelectTrigger id={field.name}>
@@ -61,7 +111,7 @@ export default function DocumentSignForm({ documents }: SignDocumentFormProps) {
                 }}
               />
               <form.Field
-                name="privateKey"
+                name="privateKeyFile"
                 children={(field) => {
                   const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
                   return (
