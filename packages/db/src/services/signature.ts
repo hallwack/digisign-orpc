@@ -24,6 +24,7 @@ export class SignatureService {
     await appendSignature(filePath, document.fileName, {
       documentHash: document.hash,
       documentId: document.id,
+      keyId: form.keyId,
       eddsaSignature: form.eddsaPrivateKey,
       rsaSignature: form.rsaPrivateKey,
       createdAt: new Date().toISOString(),
