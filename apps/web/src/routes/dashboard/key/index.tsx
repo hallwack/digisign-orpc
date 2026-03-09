@@ -1,9 +1,17 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute } from "@tanstack/react-router";
 
-export const Route = createFileRoute('/dashboard/key/')({
-  component: RouteComponent,
-})
+import KeyDataTable from "./-components/key-datatable";
 
-function RouteComponent() {
-  return <div>Hello "/dashboard/key/"!</div>
+export const Route = createFileRoute("/dashboard/key/")({
+  component: DashboardKeyIndexPageComponent,
+});
+
+function DashboardKeyIndexPageComponent() {
+  return (
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold tracking-tight">Key</h1>
+
+      <KeyDataTable />
+    </div>
+  );
 }
