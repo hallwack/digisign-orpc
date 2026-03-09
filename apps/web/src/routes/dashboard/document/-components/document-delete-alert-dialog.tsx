@@ -33,9 +33,11 @@ export default function DocumentDeleteAlertDialog({ id, onSuccess, ...props }: D
   );
 
   function onDelete() {
-    deleteMutation.mutate({ id: id as string });
-    props.onOpenChangeComplete?.(false);
-    onSuccess?.();
+    if (id) {
+      deleteMutation.mutate({ id });
+      props.onOpenChangeComplete?.(false);
+      onSuccess?.();
+    }
   }
 
   return (
