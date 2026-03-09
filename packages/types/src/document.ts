@@ -43,7 +43,15 @@ export const documentIdSchema = z.object({
 
 export const documentSignSchema = z.object({
   documentId: idSchema,
-  privateKey: documentKeySchema,
+  keyId: idSchema,
+  hash: z.string(),
+  rsaPrivateKey: z.string(),
+  eddsaPrivateKey: z.string(),
+});
+
+export const documentSignFormSchema = z.object({
+  documentId: idSchema,
+  privateKeyFile: documentKeySchema,
 });
 
 export const documentFileUploadSchema = z.object({
@@ -81,6 +89,7 @@ export const getAllDocumentResponseSchema = z.array(
   documentSchema.pick({
     id: true,
     userId: true,
+    hash: true,
     fileName: true,
     title: true,
   }),
@@ -91,6 +100,7 @@ export type DocumentDataTableRequestSchema = z.infer<typeof documentDataTableReq
 export type DocumentDataTableResponseSchema = z.infer<typeof documentDataTableResponseSchema>;
 export type DocumentSignResponseSchema = z.infer<typeof documentSignResponseSchema>;
 export type DocumentSignSchema = z.infer<typeof documentSignSchema>;
+export type DocumentSignFormSchema = z.infer<typeof documentSignFormSchema>;
 export type DocumentUploadSchema = z.infer<typeof documentUploadSchema>;
 export type DocumentFileUploadSchema = z.infer<typeof documentFileUploadSchema>;
 export type GetAllDocumentResponseSchema = z.infer<typeof getAllDocumentResponseSchema>;
