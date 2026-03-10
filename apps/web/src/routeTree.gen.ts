@@ -11,9 +11,11 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as DashboardRouteRouteImport } from './routes/dashboard/route'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as appRouteRouteImport } from './routes/(app)/route'
+import { Route as appIndexRouteImport } from './routes/(app)/index'
 import { Route as AuthRegisterRouteImport } from './routes/_auth/register'
 import { Route as AuthLoginRouteImport } from './routes/_auth/login'
+import { Route as appVerifyRouteImport } from './routes/(app)/verify'
 import { Route as DashboardKeyIndexRouteImport } from './routes/dashboard/key/index'
 import { Route as DashboardDocumentIndexRouteImport } from './routes/dashboard/document/index'
 import { Route as DashboardKeyCreateRouteImport } from './routes/dashboard/key/create'
@@ -29,10 +31,14 @@ const DashboardRouteRoute = DashboardRouteRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
+const appRouteRoute = appRouteRouteImport.update({
+  id: '/(app)',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const appIndexRoute = appIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => appRouteRoute,
 } as any)
 const AuthRegisterRoute = AuthRegisterRouteImport.update({
   id: '/register',
@@ -43,6 +49,11 @@ const AuthLoginRoute = AuthLoginRouteImport.update({
   id: '/login',
   path: '/login',
   getParentRoute: () => AuthRoute,
+} as any)
+const appVerifyRoute = appVerifyRouteImport.update({
+  id: '/verify',
+  path: '/verify',
+  getParentRoute: () => appRouteRoute,
 } as any)
 const DashboardKeyIndexRoute = DashboardKeyIndexRouteImport.update({
   id: '/key/',
@@ -71,8 +82,9 @@ const DashboardDocumentSignRoute = DashboardDocumentSignRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
   '/dashboard': typeof DashboardRouteRouteWithChildren
+  '/': typeof appIndexRoute
+  '/verify': typeof appVerifyRoute
   '/login': typeof AuthLoginRoute
   '/register': typeof AuthRegisterRoute
   '/dashboard/document/sign': typeof DashboardDocumentSignRoute
@@ -82,8 +94,9 @@ export interface FileRoutesByFullPath {
   '/dashboard/key/': typeof DashboardKeyIndexRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
   '/dashboard': typeof DashboardRouteRouteWithChildren
+  '/': typeof appIndexRoute
+  '/verify': typeof appVerifyRoute
   '/login': typeof AuthLoginRoute
   '/register': typeof AuthRegisterRoute
   '/dashboard/document/sign': typeof DashboardDocumentSignRoute
@@ -94,11 +107,13 @@ export interface FileRoutesByTo {
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
+  '/(app)': typeof appRouteRouteWithChildren
   '/dashboard': typeof DashboardRouteRouteWithChildren
   '/_auth': typeof AuthRouteWithChildren
+  '/(app)/verify': typeof appVerifyRoute
   '/_auth/login': typeof AuthLoginRoute
   '/_auth/register': typeof AuthRegisterRoute
+  '/(app)/': typeof appIndexRoute
   '/dashboard/document/sign': typeof DashboardDocumentSignRoute
   '/dashboard/document/upload': typeof DashboardDocumentUploadRoute
   '/dashboard/key/create': typeof DashboardKeyCreateRoute
@@ -108,8 +123,9 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    | '/'
     | '/dashboard'
+    | '/'
+    | '/verify'
     | '/login'
     | '/register'
     | '/dashboard/document/sign'
@@ -119,8 +135,9 @@ export interface FileRouteTypes {
     | '/dashboard/key/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
     | '/dashboard'
+    | '/'
+    | '/verify'
     | '/login'
     | '/register'
     | '/dashboard/document/sign'
@@ -130,11 +147,13 @@ export interface FileRouteTypes {
     | '/dashboard/key'
   id:
     | '__root__'
-    | '/'
+    | '/(app)'
     | '/dashboard'
     | '/_auth'
+    | '/(app)/verify'
     | '/_auth/login'
     | '/_auth/register'
+    | '/(app)/'
     | '/dashboard/document/sign'
     | '/dashboard/document/upload'
     | '/dashboard/key/create'
@@ -143,7 +162,7 @@ export interface FileRouteTypes {
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
+  appRouteRoute: typeof appRouteRouteWithChildren
   DashboardRouteRoute: typeof DashboardRouteRouteWithChildren
   AuthRoute: typeof AuthRouteWithChildren
 }
@@ -164,12 +183,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
+    '/(app)': {
+      id: '/(app)'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof appRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/(app)/': {
+      id: '/(app)/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof appIndexRouteImport
+      parentRoute: typeof appRouteRoute
     }
     '/_auth/register': {
       id: '/_auth/register'
@@ -184,6 +210,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/login'
       preLoaderRoute: typeof AuthLoginRouteImport
       parentRoute: typeof AuthRoute
+    }
+    '/(app)/verify': {
+      id: '/(app)/verify'
+      path: '/verify'
+      fullPath: '/verify'
+      preLoaderRoute: typeof appVerifyRouteImport
+      parentRoute: typeof appRouteRoute
     }
     '/dashboard/key/': {
       id: '/dashboard/key/'
@@ -223,6 +256,20 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface appRouteRouteChildren {
+  appVerifyRoute: typeof appVerifyRoute
+  appIndexRoute: typeof appIndexRoute
+}
+
+const appRouteRouteChildren: appRouteRouteChildren = {
+  appVerifyRoute: appVerifyRoute,
+  appIndexRoute: appIndexRoute,
+}
+
+const appRouteRouteWithChildren = appRouteRoute._addFileChildren(
+  appRouteRouteChildren,
+)
+
 interface DashboardRouteRouteChildren {
   DashboardDocumentSignRoute: typeof DashboardDocumentSignRoute
   DashboardDocumentUploadRoute: typeof DashboardDocumentUploadRoute
@@ -256,7 +303,7 @@ const AuthRouteChildren: AuthRouteChildren = {
 const AuthRouteWithChildren = AuthRoute._addFileChildren(AuthRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+  appRouteRoute: appRouteRouteWithChildren,
   DashboardRouteRoute: DashboardRouteRouteWithChildren,
   AuthRoute: AuthRouteWithChildren,
 }
