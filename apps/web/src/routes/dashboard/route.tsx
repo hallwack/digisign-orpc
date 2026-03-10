@@ -9,6 +9,9 @@ import { authClient } from "@/lib/auth-client";
 
 export const Route = createFileRoute("/dashboard")({
   component: DashboardPageComponent,
+  staticData: {
+    breadcrumb: { label: "Dashboard" },
+  },
   beforeLoad: async () => {
     const session = await authClient.getSession();
     if (!session.data) {

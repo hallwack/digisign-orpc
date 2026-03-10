@@ -6,6 +6,9 @@ import DocumentSignForm from "./-components/document-sign-form";
 
 export const Route = createFileRoute("/dashboard/document/sign")({
   component: DashboardDocumentSignPageComponent,
+  staticData: {
+    breadcrumb: { label: "Sign Document" },
+  },
   loader: async ({ context: { queryClient } }) => {
     const documents = await queryClient.ensureQueryData(orpc.document.getAll.queryOptions());
     return { documents };

@@ -3,6 +3,9 @@ import DocumentUploadForm from "./-components/document-upload-form";
 
 export const Route = createFileRoute("/dashboard/document/upload")({
   component: DashboardDocumentUploadPageComponent,
+  staticData: {
+    breadcrumb: { label: "Upload Document" },
+  },
 });
 
 function DashboardDocumentUploadPageComponent() {

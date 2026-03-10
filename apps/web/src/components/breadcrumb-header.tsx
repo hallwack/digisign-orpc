@@ -1,67 +1,118 @@
-import { useLocation } from "@tanstack/react-router";
+import { Link, useMatches } from "@tanstack/react-router";
 import { Fragment } from "react";
 
 import {
   Breadcrumb,
+  BreadcrumbEllipsis,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { sidebarMainMenu } from "@/lib/sidebar-menu";
-import { parseSlug } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
-const flattenItems = () => {
-  const paths: { title: string; url: string }[] = [];
+export interface BreadcrumbMeta {
+  label: string | ((ctx: { params: Record<string, string>; loaderData?: unknown }) => string);
+  disabled?: boolean;
+}
 
-  sidebarMainMenu.forEach((section) => {
-    section.items.forEach((item) => {
-      paths.push({ title: item.shortName, url: item.url });
-    });
-  });
+const COLLAPSE_THRESHOLD = 4;
 
-  return paths;
-};
+function resolveLabel(meta: BreadcrumbMeta, params: Record<string, string>, loaderData?: unknown): string {
+  if (typeof meta.label === "function") {
+    return meta.label({ params, loaderData });
+  }
+  return meta.label;
+}
 
 export default function BreadcrumbHeader() {
-  const { pathname } = useLocation();
-  const segments = pathname.split("/").filter(Boolean);
-  const pathAccumulator: string[] = [];
+  const matches = useMatches();
+  console.log("Dashboard matches:", matches);
 
-  const allPaths = flattenItems();
+  const crumbs = matches
+    .filter((match) => {
+      const context = (match as any).context as Record<string, unknown> | undefined;
+      const staticData = (match.staticData as Record<string, unknown>) ?? {};
+      return context?.breadcrumb || staticData?.breadcrumb;
+    })
+    .map((match) => {
+      const context = (match as any).context as Record<string, unknown> | undefined;
+      const staticData = (match.staticData as Record<string, unknown>) ?? {};
+      const meta = (context?.breadcrumb || staticData?.breadcrumb) as BreadcrumbMeta;
 
-  const breadcrumbs = segments.map((segment, _) => {
-    pathAccumulator.push(segment);
-    const currentPath = "/" + pathAccumulator.join("/");
+      return {
+        id: match.id,
+        pathname: match.pathname,
+        label: resolveLabel(meta, match.params, match.loaderData),
+        disabled: meta.disabled ?? false,
+      };
+    });
 
-    const matched = allPaths.find((item) => item.url === currentPath);
+  if (crumbs.length === 0) return null;
 
-    return matched ? { title: matched.title, url: currentPath } : { title: segment, url: currentPath };
-  });
+  const shouldCollapse = crumbs.length > COLLAPSE_THRESHOLD;
+  const firstCrumbs = crumbs[0];
+  const lastCrumbs = crumbs[crumbs.length - 1];
+  const collapsedCrumbs = shouldCollapse ? crumbs.slice(1, crumbs.length - 1) : [];
+  const visibleMiddleCrumbs = shouldCollapse ? [] : crumbs.slice(1, -1);
 
   return (
     <div>
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink href="/">Home</BreadcrumbLink>
+            {crumbs.length === 1 ? (
+              <BreadcrumbPage>{firstCrumbs.label}</BreadcrumbPage>
+            ) : (
+              <BreadcrumbLink render={<Link to={firstCrumbs.pathname}>{firstCrumbs.label}</Link>} />
+            )}
           </BreadcrumbItem>
 
-          {breadcrumbs.map((crumb, index) => (
-            <Fragment key={crumb.url}>
+          {visibleMiddleCrumbs.map((crumb) => (
+            <Fragment key={crumb.id}>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
-                {index === breadcrumbs.length - 1 ? (
-                  <BreadcrumbPage>{parseSlug(crumb.title).title}</BreadcrumbPage>
-                ) : (
-                  <BreadcrumbLink href={crumb.url} className="text-muted-foreground">
-                    {crumb.title}
-                  </BreadcrumbLink>
-                )}
+                <BreadcrumbLink render={<Link to={crumb.pathname}>{crumb.label}</Link>} />
               </BreadcrumbItem>
             </Fragment>
           ))}
+
+          {shouldCollapse && collapsedCrumbs.length > 0 && (
+            <>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <DropdownMenu>
+                  <DropdownMenuTrigger>
+                    <BreadcrumbEllipsis className="h-4 w-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    {collapsedCrumbs.map((crumb) => (
+                      <DropdownMenuItem
+                        key={crumb.id}
+                        disabled={crumb.disabled}
+                        render={<Link to={crumb.pathname}>{crumb.label}</Link>}
+                      />
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </BreadcrumbItem>
+            </>
+          )}
+
+          {crumbs.length > 1 && (
+            <>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>{lastCrumbs.label}</BreadcrumbPage>
+              </BreadcrumbItem>
+            </>
+          )}
         </BreadcrumbList>
       </Breadcrumb>
     </div>
