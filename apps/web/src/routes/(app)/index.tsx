@@ -5,6 +5,9 @@ import { Badge } from "@/components/ui/badge";
 
 export const Route = createFileRoute("/(app)/")({
   component: HomePageComponent,
+  staticData: {
+    breadcrumb: { label: "Home" },
+  },
 });
 
 function HomePageComponent() {

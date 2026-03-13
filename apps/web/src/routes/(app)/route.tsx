@@ -6,6 +6,9 @@ import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/(app)")({
   component: RouteComponent,
+  staticData: {
+    breadcrumb: { label: "Home" },
+  }
 });
 
 function RouteComponent() {
