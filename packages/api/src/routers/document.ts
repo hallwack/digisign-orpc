@@ -2,6 +2,7 @@ import { DocumentService } from "@digisign/db/services/document";
 import { SignatureService } from "@digisign/db/services/signature";
 import {
   documentDataTableRequestSchema,
+  documentFileUploadSchema,
   documentIdSchema,
   documentSignSchema,
   documentUploadSchema,
@@ -58,6 +59,19 @@ export const documentRouter = {
     .input(documentSignSchema)
     .handler(async ({ input }) => {
       return SignatureService.signDocument(input);
+    }),
+  verify: protectedProcedure
+    .route({
+      path: "/document/verify",
+      method: "POST",
+      inputStructure: "detailed",
+      tags: ["Document"],
+      summary: "Verify Document",
+      description: "Verify a document by file",
+    })
+    .input(documentFileUploadSchema)
+    .handler(async ({ input }) => {
+      return SignatureService.verifyDocument(input);
     }),
   delete: protectedProcedure
     .route({
