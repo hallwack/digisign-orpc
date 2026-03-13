@@ -125,21 +125,43 @@ export function verifyHybridSignature({
 }) {
   try {
     const dataToVerify = Buffer.from(hashHex, "hex");
+
+    const startVerifyingTime = performance.now();
+
+    const startRsaVerifyingTime = performance.now();
     const rsaValid = crypto.verify("SHA256", dataToVerify, rsaPublicKeyPem, Buffer.from(rsaSignatureBase64, "base64"));
+    const endRsaVerifyingTime = performance.now();
+    const rsaVerificationTime = endRsaVerifyingTime - startRsaVerifyingTime;
+
+    const startEddsaVerifyingTime = performance.now();
     const eddsaValid = crypto.verify(
       undefined,
       dataToVerify,
       eddsaPublicKeyPem,
       Buffer.from(eddsaSignatureBase64, "base64"),
     );
+    const endEddsaVerifyingTime = performance.now();
+    const eddsaVerificationTime = endEddsaVerifyingTime - startEddsaVerifyingTime;
 
+    const endVerifyingTime = performance.now();
+    const totalVerificationTime = endVerifyingTime - startVerifyingTime;
     return {
       rsaValid,
       eddsaValid,
       isAuthentic: rsaValid && eddsaValid,
+      totalVerificationTime,
+      rsaVerificationTime,
+      eddsaVerificationTime,
     };
   } catch (error) {
     console.error("Error verifying hybrid signature:", error);
-    return { rsaValid: false, eddsaValid: false, isAuthentic: false };
+    return {
+      rsaValid: false,
+      eddsaValid: false,
+      isAuthentic: false,
+      totalVerificationTime: 0,
+      rsaVerificationTime: 0,
+      eddsaVerificationTime: 0,
+    };
   }
 }
