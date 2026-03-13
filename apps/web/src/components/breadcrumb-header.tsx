@@ -33,7 +33,6 @@ function resolveLabel(meta: BreadcrumbMeta, params: Record<string, string>, load
 
 export default function BreadcrumbHeader() {
   const matches = useMatches();
-  console.log("Dashboard matches:", matches);
 
   const crumbs = matches
     .filter((match) => {
