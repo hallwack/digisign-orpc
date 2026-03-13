@@ -83,8 +83,6 @@ export const PdfSignature = {
         }
       }
 
-      console.log("verifier.ts metadata", metadata);
-
       return metadata;
     } catch (error) {
       console.error("Error parsing XMP metadata:", error);
