@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, real, text, timestamp } from "drizzle-orm/pg-core";
 
 import { userTable } from "./auth";
 
@@ -36,6 +36,9 @@ export const signatureTable = pgTable("signatures", {
     .references(() => keyTable.id, { onDelete: "cascade" }),
   rsaSignature: text("rsa_signature").notNull(),
   eddsaSignature: text("eddsa_signature").notNull(),
+  signingDuration: real("signing_duration").notNull().default(0),
+  rsaSigningDuration: real("rsa_signing_duration").notNull().default(0),
+  eddsaSigningDuration: real("eddsa_signing_duration").notNull().default(0),
   signedAt: timestamp("signed_at", {
     withTimezone: true,
     mode: "date",
