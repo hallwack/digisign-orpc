@@ -34,8 +34,10 @@ function VerifyPageComponent() {
     orpc.document.verify.mutationOptions({
       onSuccess: (data) => {
         console.log("Data", data);
-        if (data.hasSignature) {
-          toast.success(`Document is signed by ${data.signerName} and is ${data.isValid ? "valid" : "invalid"}.`);
+        if (data.isAuthentic) {
+          toast.success(
+            `Document is signed by ${data.user?.name} and is ${data.cryptoDetails?.rsaValid && data.cryptoDetails?.eddsaValid ? "valid" : "invalid"}.`,
+          );
         }
       },
       onError: (error) => {
