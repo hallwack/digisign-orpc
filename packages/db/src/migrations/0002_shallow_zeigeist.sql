@@ -1,0 +1,1 @@
+ALTER TABLE "signatures" ALTER COLUMN "signing_duration" SET DEFAULT 0;

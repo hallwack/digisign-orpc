@@ -1,0 +1,1 @@
+ALTER TABLE "signatures" ADD COLUMN "signing_duration" real NOT NULL;

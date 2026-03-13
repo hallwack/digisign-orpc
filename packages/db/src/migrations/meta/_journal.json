@@ -8,6 +8,27 @@
       "when": 1768741834491,
       "tag": "0000_spicy_machine_man",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1773416957381,
+      "tag": "0001_pink_giant_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1773417041347,
+      "tag": "0002_shallow_zeigeist",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1773417793190,
+      "tag": "0003_ordinary_daredevil",
+      "breakpoints": true
     }
   ]
 }
