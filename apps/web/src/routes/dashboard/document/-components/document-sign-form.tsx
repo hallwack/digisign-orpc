@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { parsePemSections, signEddsa, signRsa } from "@/lib/signer";
 import { orpc } from "@/utils/orpc";
+import { base64ToBlob, downloadBlob } from "@/lib/utils";
 
 interface SignDocumentFormProps {
   documents: GetAllDocumentResponseSchema;
@@ -21,7 +22,18 @@ export default function DocumentSignForm({ documents }: SignDocumentFormProps) {
   const navigate = useNavigate();
   const mutation = useMutation(
     orpc.document.sign.mutationOptions({
-      onSuccess: () => {
+      onSuccess: (data) => {
+        const fileData = data.fileData;
+        const mimeType = data.mimeType;
+        const fileName = data.fileName;
+
+        if (!fileData || !mimeType || !fileName) {
+          throw new Error("Missing file data for download");
+        } else {
+          const blob = base64ToBlob(fileData, mimeType);
+          downloadBlob(blob, fileName);
+        }
+
         toast.success("Document signed successfully.");
         navigate({ to: "/dashboard/document" });
       },
