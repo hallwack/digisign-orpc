@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { join, resolve } from "node:path";
 
 import type { DocumentFileUploadSchema, DocumentSignSchema } from "@digisign/types";
@@ -8,7 +8,7 @@ import { getDocumentByName } from "../libs/document";
 import { generateId } from "../libs/random";
 import { appendSignature, verifyDocumentSignature, verifyHybridSignature } from "../libs/signature";
 import { convertToSlug } from "../libs/slug";
-import { keyTable, signatureTable, userTable } from "../tables";
+import { documentTable, keyTable, signatureTable, userTable } from "../tables";
 
 export class SignatureService {
   static async signDocument(form: DocumentSignSchema) {
@@ -74,54 +74,58 @@ export class SignatureService {
   }
 
   static async verifyDocument(form: DocumentFileUploadSchema) {
-    const extractedData = await verifyDocumentSignature(form.file);
+    const extractedMetadata = await verifyDocumentSignature(form.file);
 
-    if (!extractedData.hasSignature || !extractedData.signatureData) {
+    const defaultReturn = {
+      isAuthentic: false,
+      message: "",
+      extractedMetadata,
+      dataDetails: null,
+      cryptoDetails: null,
+    };
+
+    if (!extractedMetadata.hasSignature || !extractedMetadata.signatureData) {
       return {
-        isAuthentic: false,
+        ...defaultReturn,
         message: "No valid signature metadata found in the document.",
-        documentData: extractedData,
-        cryptoDetails: null,
-        user: null,
       };
     }
 
-    const { signatureData } = extractedData;
+    const fileSignatureData = extractedMetadata.signatureData;
 
     const [result] = await db
-      .select({ key: keyTable, user: userTable })
-      .from(keyTable)
+      .select({
+        signature: signatureTable,
+        key: keyTable,
+        document: documentTable,
+        user: userTable,
+      })
+      .from(signatureTable)
+      .innerJoin(keyTable, eq(signatureTable.keyId, keyTable.id))
       .innerJoin(userTable, eq(keyTable.userId, userTable.id))
-      .where(eq(keyTable.id, signatureData.keyId));
+      .innerJoin(documentTable, eq(signatureTable.documentId, documentTable.id))
+      .where(and(eq(keyTable.id, fileSignatureData.keyId), eq(documentTable.id, fileSignatureData.documentId)));
 
-    const publicKeyRecord = result?.key;
-    if (!publicKeyRecord) {
+    if (!result) {
       return {
-        isAuthentic: false,
-        message: "Public key associated with the signature not found.",
-        documentData: extractedData,
-        cryptoDetails: null,
-        user: null,
+        ...defaultReturn,
+        message: "Signature record or associated key/user not found in the database.",
       };
     }
 
-    const userData = result?.user;
-    if (!userData) {
-      return {
-        isAuthentic: false,
-        mesage: "User associated with the signature not found.",
-        documentData: extractedData,
-        cryptoDetails: null,
-        user: null,
-      };
-    }
+    const {
+      user: userData,
+      key: keyData,
+      document: documentData,
+      signature: signatureData,
+    } = result;
 
     const cryptoVerification = verifyHybridSignature({
-      hashHex: signatureData.documentHash,
-      rsaSignatureBase64: signatureData.rsaSignature,
-      rsaPublicKeyPem: publicKeyRecord.publicKeyRsa,
-      eddsaSignatureBase64: signatureData.eddsaSignature,
-      eddsaPublicKeyPem: publicKeyRecord.publicKeyEddsa,
+      hashHex: fileSignatureData.documentHash,
+      rsaSignatureBase64: fileSignatureData.rsaSignature,
+      rsaPublicKeyPem: keyData.publicKeyRsa,
+      eddsaSignatureBase64: fileSignatureData.eddsaSignature,
+      eddsaPublicKeyPem: keyData.publicKeyEddsa,
     });
 
     return {
@@ -129,7 +133,13 @@ export class SignatureService {
       message: cryptoVerification.isAuthentic
         ? "Document signature is valid."
         : `Document signature is invalid. RSA Valid: ${cryptoVerification.rsaValid}. EdDSA Valid: ${cryptoVerification.eddsaValid}`,
-      documentData: extractedData,
+      extractedMetadata,
+      dataDetails: {
+        userData,
+        keyData,
+        documentData,
+        signatureData,
+      },
       cryptoDetails: {
         rsaValid: cryptoVerification.rsaValid,
         eddsaValid: cryptoVerification.eddsaValid,
@@ -137,7 +147,6 @@ export class SignatureService {
         rsaVerificationTimeMs: cryptoVerification.rsaVerificationTime,
         eddsaVerificationTimeMs: cryptoVerification.eddsaVerificationTime,
       },
-      user: userData,
     };
   }
 }
