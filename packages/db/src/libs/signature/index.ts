@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import path from "node:path";
 
 import type { DocumentVerificationResultSchema, SignatureMetadataSchema } from "@digisign/types";
@@ -106,5 +107,39 @@ export async function appendSignature(filePath: string, docName: string, metaDat
     }
   } catch (error) {
     throw new Error(`Failed to append signature: ${error instanceof Error ? error.message : "Unknown error"}`);
+  }
+}
+
+export function verifyHybridSignature({
+  hashHex,
+  rsaSignatureBase64,
+  rsaPublicKeyPem,
+  eddsaSignatureBase64,
+  eddsaPublicKeyPem,
+}: {
+  hashHex: string;
+  rsaSignatureBase64: string;
+  rsaPublicKeyPem: string;
+  eddsaSignatureBase64: string;
+  eddsaPublicKeyPem: string;
+}) {
+  try {
+    const dataToVerify = Buffer.from(hashHex, "hex");
+    const rsaValid = crypto.verify("SHA256", dataToVerify, rsaPublicKeyPem, Buffer.from(rsaSignatureBase64, "base64"));
+    const eddsaValid = crypto.verify(
+      undefined,
+      dataToVerify,
+      eddsaPublicKeyPem,
+      Buffer.from(eddsaSignatureBase64, "base64"),
+    );
+
+    return {
+      rsaValid,
+      eddsaValid,
+      isAuthentic: rsaValid && eddsaValid,
+    };
+  } catch (error) {
+    console.error("Error verifying hybrid signature:", error);
+    return { rsaValid: false, eddsaValid: false, isAuthentic: false };
   }
 }

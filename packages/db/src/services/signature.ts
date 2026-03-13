@@ -5,7 +5,7 @@ import type { DocumentFileUploadSchema, DocumentSignSchema } from "@digisign/typ
 import { db } from "..";
 import { getDocumentByName } from "../libs/document";
 import { generateId } from "../libs/random";
-import { appendSignature, verifyDocumentSignature } from "../libs/signature";
+import { appendSignature, verifyDocumentSignature, verifyHybridSignature } from "../libs/signature";
 import { convertToSlug } from "../libs/slug";
 import { signatureTable } from "../tables";
 
@@ -17,10 +17,27 @@ export class SignatureService {
 
     if (!document) throw new Error("Document not found");
 
+    const publicKeyRecord = await db.query.keyTable.findFirst({
+      where: (keyTable, { eq }) => eq(keyTable.id, form.keyId),
+    });
+
+    if (!publicKeyRecord) throw new Error("Public key not found");
+
+    const verification = verifyHybridSignature({
+      hashHex: document.hash,
+      rsaSignatureBase64: form.rsaPrivateKey,
+      rsaPublicKeyPem: publicKeyRecord.publicKeyRsa,
+      eddsaSignatureBase64: form.eddsaPrivateKey,
+      eddsaPublicKeyPem: publicKeyRecord.publicKeyEddsa,
+    });
+
+    if (!verification.isAuthentic)
+      throw new Error(
+        `Invalid digital signature. RSA Valid: ${verification.rsaValid}. EdDSA Valid: ${verification.eddsaValid}`,
+      );
+
     const dirName = convertToSlug(`${document.title}-${document.id}`);
-
     const storagePath = resolve(process.cwd(), "../../storage/documents");
-
     const filePath = join(storagePath, dirName);
 
     await appendSignature(filePath, document.fileName, {
@@ -34,7 +51,7 @@ export class SignatureService {
 
     const { name: documentName, content: documentContent } = await getDocumentByName(filePath, "signed");
 
-    const signature = await db.insert(signatureTable).values({
+    const signatureRecord = await db.insert(signatureTable).values({
       id: generateId(),
       keyId: form.keyId,
       documentId: document.id,
@@ -43,7 +60,7 @@ export class SignatureService {
       signedAt: new Date(),
     });
 
-    if (!signature) throw new Error("Failed to sign document");
+    if (!signatureRecord) throw new Error("Failed to sign document");
 
     return {
       fileData: Buffer.from(documentContent).toString("base64"),
@@ -53,8 +70,50 @@ export class SignatureService {
   }
 
   static async verifyDocument(form: DocumentFileUploadSchema) {
-    const verifiedDocument = await verifyDocumentSignature(form.file);
+    const extractedData = await verifyDocumentSignature(form.file);
 
-    return verifiedDocument;
+    if (!extractedData.hasSignature || !extractedData.signatureData) {
+      return {
+        isAuthentic: false,
+        message: "No valid signature metadata found in the document.",
+        documentData: extractedData,
+        cryptoDetails: null,
+      };
+    }
+
+    const { signatureData } = extractedData;
+
+    const publicKeyRecord = await db.query.keyTable.findFirst({
+      where: (keyTable, { eq }) => eq(keyTable.id, signatureData.keyId),
+    });
+
+    if (!publicKeyRecord) {
+      return {
+        isAuthentic: false,
+        message: "Public key associated with the signature not found.",
+        documentData: extractedData,
+        cryptoDetails: null,
+      };
+    }
+
+    const cryptoVerification = verifyHybridSignature({
+      hashHex: signatureData.documentHash,
+      rsaSignatureBase64: signatureData.rsaSignature,
+      rsaPublicKeyPem: publicKeyRecord.publicKeyRsa,
+      eddsaSignatureBase64: signatureData.eddsaSignature,
+      eddsaPublicKeyPem: publicKeyRecord.publicKeyEddsa,
+    });
+
+    return {
+      isAuthentic: cryptoVerification.isAuthentic,
+      message: cryptoVerification.isAuthentic
+        ? "Document signature is valid."
+        : `Document signature is invalid. RSA Valid: ${cryptoVerification.rsaValid}. EdDSA Valid: ${cryptoVerification.eddsaValid}`,
+      documentData: extractedData,
+      cryptoDetails: {
+        rsaValid: cryptoVerification.rsaValid,
+        eddsaValid: cryptoVerification.eddsaValid,
+      },
+    };
   }
 }
