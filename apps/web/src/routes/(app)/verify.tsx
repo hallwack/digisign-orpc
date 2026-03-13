@@ -41,6 +41,7 @@ function VerifyPageComponent() {
   const mutation = useMutation(
     orpc.document.verify.mutationOptions({
       onSuccess: (data) => {
+        console.log("Document verification result:", data);
         const signerName = data.dataDetails?.userData?.name || "User";
         if (data.isAuthentic) {
           toast.success(`Dokumen valid! Ditandatangani oleh ${signerName}.`);
@@ -177,20 +178,19 @@ function VerifyPageComponent() {
             <Separator />
             <CardContent>
               {!mutation.data && !mutation.isPending ? (
-                <div className="text-muted-foreground flex flex-col items-center justify-center gap-4 py-12 text-center">
+                <div className="flex flex-col items-center justify-center gap-4 py-12 text-center">
                   <FileIcon className="h-12 w-12 opacity-20" />
                   <p className="text-sm">
                     Silakan unggah dan submit dokumen untuk melihat hasil verifikasinya di sini.
                   </p>
                 </div>
               ) : mutation.isPending ? (
-                <div className="text-muted-foreground flex flex-col items-center justify-center gap-4 py-12 text-center">
-                  <Loader2Icon className="text-primary h-8 w-8 animate-spin" />
+                <div className="flex flex-col items-center justify-center gap-4 py-12 text-center">
+                  <Loader2Icon className="h-12 w-12 animate-spin" />
                   <p className="animate-pulse text-sm">Sedang membedah struktur kriptografi...</p>
                 </div>
               ) : mutation.data ? (
                 <div className="animate-in fade-in zoom-in-95 space-y-6 duration-300">
-
                   {(() => {
                     const status = mutation.data.isAuthentic ? statusMap.valid : statusMap.invalid;
                     const StatusIcon = status.icon;
@@ -213,20 +213,22 @@ function VerifyPageComponent() {
                             <span className="col-span-2 font-medium">
                               {mutation.data.dataDetails.userData?.name || "N/A"}
                             </span>
-                            {mutation.data.dataDetails.userData?.email && (
-                              <>
-                                <span className="text-muted-foreground">Email</span>
-                                <span className="col-span-2">{mutation.data.dataDetails.userData.email}</span>
-                              </>
-                            )}
-                            {mutation.data.dataDetails.signatureData?.signedAt && (
-                              <>
-                                <span className="text-muted-foreground">Waktu Sign</span>
-                                <span className="col-span-2">
-                                  {formatDate(new Date(mutation.data.dataDetails.signatureData.signedAt))} WIB
-                                </span>
-                              </>
-                            )}
+                            <span className="text-muted-foreground">Email</span>
+                            <span className="col-span-2">{mutation.data.dataDetails.userData.email || "N/A"}</span>
+                            <span className="text-muted-foreground">Waktu Sign</span>
+                            <span className="col-span-2">
+                              {formatDate(new Date(mutation.data.dataDetails.signatureData.signedAt || "N/A"))}
+                            </span>
+                            <span className="text-muted-foreground">File Name</span>
+                            <span className="col-span-2">
+                              {mutation.data.dataDetails.documentData.fileName || "N/A"}
+                            </span>
+                            <span className="text-muted-foreground">Title</span>
+                            <span className="col-span-2">{mutation.data.dataDetails.documentData.title || "N/A"}</span>
+                            <span className="text-muted-foreground">Description</span>
+                            <span className="col-span-2">
+                              {mutation.data.dataDetails.documentData.description || "N/A"}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -234,54 +236,81 @@ function VerifyPageComponent() {
                   )}
 
                   {mutation.data.cryptoDetails && (
-                    <div className="space-y-2">
-                      <h5 className="text-sm font-semibold">Metrik Kriptografi Hybrid</h5>
-                      <div className="bg-muted/30 rounded-md border p-3 text-sm">
-                        <div className="flex items-center justify-between py-1.5">
-                          <span className="text-muted-foreground">RSA 2048</span>
-                          <div className="flex items-center gap-3">
-                            <span className="text-muted-foreground font-mono text-xs">
-                              {mutation.data.cryptoDetails.rsaVerificationTimeMs?.toFixed(2)} ms
-                            </span>
-                            <span
-                              className={clsx(
-                                "font-medium",
-                                mutation.data.cryptoDetails.rsaValid
-                                  ? "text-green-600 dark:text-green-400"
-                                  : "text-red-600 dark:text-red-400",
-                              )}
-                            >
-                              {mutation.data.cryptoDetails.rsaValid ? "Valid" : "Invalid"}
+                    <div className="space-y-3">
+                      <h5 className="text-sm font-semibold">Kecepatan Komputasi (Milidetik)</h5>
+                      <div className="bg-muted/30 rounded-md border p-4 text-sm">
+                        {/* --- BAGIAN 1: PROSES SIGNING (FRONTEND) --- */}
+                        {mutation.data.dataDetails?.signatureData && (
+                          <div className="mb-4">
+                            <div className="text-muted-foreground mb-2 text-xs font-semibold tracking-wider uppercase">
+                              Pembuatan Tanda Tangan (Frontend)
+                            </div>
+
+                            <div className="flex items-center justify-between py-1">
+                              <span className="text-muted-foreground">RSA 2048</span>
+                              <span className="font-mono text-xs">
+                                {mutation.data.dataDetails.signatureData.rsaSigningDuration?.toFixed(2) || "0.00"} ms
+                              </span>
+                            </div>
+
+                            <div className="flex items-center justify-between py-1">
+                              <span className="text-muted-foreground">EdDSA (Ed25519)</span>
+                              <span className="font-mono text-xs">
+                                {mutation.data.dataDetails.signatureData.eddsaSigningDuration?.toFixed(2) || "0.00"} ms
+                              </span>
+                            </div>
+
+                            <div className="mt-1 flex items-center justify-between py-1 font-medium">
+                              <span className="text-muted-foreground">Total Waktu Signing</span>
+                              <span className="font-mono text-xs">
+                                {mutation.data.dataDetails.signatureData.signingDuration?.toFixed(2) || "0.00"} ms
+                              </span>
+                            </div>
+
+                            <Separator className="my-3" />
+                          </div>
+                        )}
+
+                        {/* --- BAGIAN 2: PROSES VERIFIKASI (BACKEND) --- */}
+                        <div>
+                          <div className="text-muted-foreground mb-2 text-xs font-semibold tracking-wider uppercase">
+                            Validasi Keaslian (Backend)
+                          </div>
+
+                          <div className="flex items-center justify-between py-1">
+                            <span className="text-muted-foreground">RSA 2048</span>
+                            <div className="flex items-center gap-3">
+                              <span className="text-muted-foreground font-mono text-xs">
+                                {mutation.data.cryptoDetails.rsaVerificationTimeMs?.toFixed(2)} ms
+                              </span>
+                              <span
+                                className={`font-medium ${mutation.data.cryptoDetails.rsaValid ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
+                              >
+                                {mutation.data.cryptoDetails.rsaValid ? "Valid" : "Invalid"}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center justify-between py-1">
+                            <span className="text-muted-foreground">EdDSA (Ed25519)</span>
+                            <div className="flex items-center gap-3">
+                              <span className="text-muted-foreground font-mono text-xs">
+                                {mutation.data.cryptoDetails.eddsaVerificationTimeMs?.toFixed(2)} ms
+                              </span>
+                              <span
+                                className={`font-medium ${mutation.data.cryptoDetails.eddsaValid ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
+                              >
+                                {mutation.data.cryptoDetails.eddsaValid ? "Valid" : "Invalid"}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="bg-background/50 -mx-2 mt-2 flex items-center justify-between rounded px-2 py-1.5 font-medium">
+                            <span>Total Waktu Verifikasi</span>
+                            <span className="text-primary font-mono">
+                              {mutation.data.cryptoDetails.totalVerificationTimeMs?.toFixed(2)} ms
                             </span>
                           </div>
-                        </div>
-
-                        <div className="flex items-center justify-between py-1.5">
-                          <span className="text-muted-foreground">EdDSA (Ed25519)</span>
-                          <div className="flex items-center gap-3">
-                            <span className="text-muted-foreground font-mono text-xs">
-                              {mutation.data.cryptoDetails.eddsaVerificationTimeMs?.toFixed(2)} ms
-                            </span>
-                            <span
-                              className={clsx(
-                                "font-medium",
-                                mutation.data.cryptoDetails.eddsaValid
-                                  ? "text-green-600 dark:text-green-400"
-                                  : "text-red-600 dark:text-red-400",
-                              )}
-                            >
-                              {mutation.data.cryptoDetails.eddsaValid ? "Valid" : "Invalid"}
-                            </span>
-                          </div>
-                        </div>
-
-                        <Separator className="my-2" />
-
-                        <div className="flex items-center justify-between py-1.5 font-medium">
-                          <span>Total Waktu Komputasi</span>
-                          <span className="text-primary font-mono">
-                            {mutation.data.cryptoDetails.totalVerificationTimeMs?.toFixed(2)} ms
-                          </span>
                         </div>
                       </div>
                     </div>
