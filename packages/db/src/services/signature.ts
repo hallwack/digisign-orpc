@@ -1,3 +1,4 @@
+import { eq } from "drizzle-orm";
 import { join, resolve } from "node:path";
 
 import type { DocumentFileUploadSchema, DocumentSignSchema } from "@digisign/types";
@@ -7,7 +8,7 @@ import { getDocumentByName } from "../libs/document";
 import { generateId } from "../libs/random";
 import { appendSignature, verifyDocumentSignature, verifyHybridSignature } from "../libs/signature";
 import { convertToSlug } from "../libs/slug";
-import { signatureTable } from "../tables";
+import { keyTable, signatureTable, userTable } from "../tables";
 
 export class SignatureService {
   static async signDocument(form: DocumentSignSchema) {
@@ -57,6 +58,9 @@ export class SignatureService {
       documentId: document.id,
       rsaSignature: form.rsaPrivateKey,
       eddsaSignature: form.eddsaPrivateKey,
+      signingDuration: form.signingTime,
+      rsaSigningDuration: form.rsaSigningTime,
+      eddsaSigningDuration: form.eddsaSigningTime,
       signedAt: new Date(),
     });
 
@@ -78,21 +82,37 @@ export class SignatureService {
         message: "No valid signature metadata found in the document.",
         documentData: extractedData,
         cryptoDetails: null,
+        user: null,
       };
     }
 
     const { signatureData } = extractedData;
 
-    const publicKeyRecord = await db.query.keyTable.findFirst({
-      where: (keyTable, { eq }) => eq(keyTable.id, signatureData.keyId),
-    });
+    const [result] = await db
+      .select({ key: keyTable, user: userTable })
+      .from(keyTable)
+      .innerJoin(userTable, eq(keyTable.userId, userTable.id))
+      .where(eq(keyTable.id, signatureData.keyId));
 
+    const publicKeyRecord = result?.key;
     if (!publicKeyRecord) {
       return {
         isAuthentic: false,
         message: "Public key associated with the signature not found.",
         documentData: extractedData,
         cryptoDetails: null,
+        user: null,
+      };
+    }
+
+    const userData = result?.user;
+    if (!userData) {
+      return {
+        isAuthentic: false,
+        mesage: "User associated with the signature not found.",
+        documentData: extractedData,
+        cryptoDetails: null,
+        user: null,
       };
     }
 
@@ -113,7 +133,11 @@ export class SignatureService {
       cryptoDetails: {
         rsaValid: cryptoVerification.rsaValid,
         eddsaValid: cryptoVerification.eddsaValid,
+        totalVerificationTimeMs: cryptoVerification.totalVerificationTime,
+        rsaVerificationTimeMs: cryptoVerification.rsaVerificationTime,
+        eddsaVerificationTimeMs: cryptoVerification.eddsaVerificationTime,
       },
+      user: userData,
     };
   }
 }
