@@ -239,30 +239,29 @@ function VerifyPageComponent() {
                     <div className="space-y-3">
                       <h5 className="text-sm font-semibold">Kecepatan Komputasi (Milidetik)</h5>
                       <div className="bg-muted/30 rounded-md border p-4 text-sm">
-                        {/* --- BAGIAN 1: PROSES SIGNING (FRONTEND) --- */}
                         {mutation.data.dataDetails?.signatureData && (
                           <div className="mb-4">
-                            <div className="text-muted-foreground mb-2 text-xs font-semibold tracking-wider uppercase">
+                            <div className="text-muted-foreground mb-2 font-semibold">
                               Pembuatan Tanda Tangan (Frontend)
                             </div>
 
                             <div className="flex items-center justify-between py-1">
                               <span className="text-muted-foreground">RSA 2048</span>
-                              <span className="font-mono text-xs">
+                              <span className="font-mono">
                                 {mutation.data.dataDetails.signatureData.rsaSigningDuration?.toFixed(2) || "0.00"} ms
                               </span>
                             </div>
 
                             <div className="flex items-center justify-between py-1">
                               <span className="text-muted-foreground">EdDSA (Ed25519)</span>
-                              <span className="font-mono text-xs">
+                              <span className="font-mono">
                                 {mutation.data.dataDetails.signatureData.eddsaSigningDuration?.toFixed(2) || "0.00"} ms
                               </span>
                             </div>
 
                             <div className="mt-1 flex items-center justify-between py-1 font-medium">
                               <span className="text-muted-foreground">Total Waktu Signing</span>
-                              <span className="font-mono text-xs">
+                              <span className="font-mono">
                                 {mutation.data.dataDetails.signatureData.signingDuration?.toFixed(2) || "0.00"} ms
                               </span>
                             </div>
@@ -271,20 +270,24 @@ function VerifyPageComponent() {
                           </div>
                         )}
 
-                        {/* --- BAGIAN 2: PROSES VERIFIKASI (BACKEND) --- */}
                         <div>
-                          <div className="text-muted-foreground mb-2 text-xs font-semibold tracking-wider uppercase">
+                          <div className="text-muted-foreground mb-2 font-semibold">
                             Validasi Keaslian (Backend)
                           </div>
 
                           <div className="flex items-center justify-between py-1">
                             <span className="text-muted-foreground">RSA 2048</span>
                             <div className="flex items-center gap-3">
-                              <span className="text-muted-foreground font-mono text-xs">
+                              <span className="font-mono">
                                 {mutation.data.cryptoDetails.rsaVerificationTimeMs?.toFixed(2)} ms
                               </span>
                               <span
-                                className={`font-medium ${mutation.data.cryptoDetails.rsaValid ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
+                                className={clsx(
+                                  "font-medium",
+                                  mutation.data.cryptoDetails.rsaValid
+                                    ? "text-green-600 dark:text-green-400"
+                                    : "text-red-600 dark:text-red-400",
+                                )}
                               >
                                 {mutation.data.cryptoDetails.rsaValid ? "Valid" : "Invalid"}
                               </span>
@@ -294,20 +297,25 @@ function VerifyPageComponent() {
                           <div className="flex items-center justify-between py-1">
                             <span className="text-muted-foreground">EdDSA (Ed25519)</span>
                             <div className="flex items-center gap-3">
-                              <span className="text-muted-foreground font-mono text-xs">
+                              <span className="font-mono">
                                 {mutation.data.cryptoDetails.eddsaVerificationTimeMs?.toFixed(2)} ms
                               </span>
                               <span
-                                className={`font-medium ${mutation.data.cryptoDetails.eddsaValid ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}
+                                className={clsx(
+                                  "font-medium",
+                                  mutation.data.cryptoDetails.eddsaValid
+                                    ? "text-green-600 dark:text-green-400"
+                                    : "text-red-600 dark:text-red-400",
+                                )}
                               >
                                 {mutation.data.cryptoDetails.eddsaValid ? "Valid" : "Invalid"}
                               </span>
                             </div>
                           </div>
 
-                          <div className="bg-background/50 -mx-2 mt-2 flex items-center justify-between rounded px-2 py-1.5 font-medium">
-                            <span>Total Waktu Verifikasi</span>
-                            <span className="text-primary font-mono">
+                          <div className="mt-1 flex items-center justify-between py-1 font-medium">
+                            <span className="text-muted-foreground">Total Waktu Verifikasi</span>
+                            <span className="font-mono">
                               {mutation.data.cryptoDetails.totalVerificationTimeMs?.toFixed(2)} ms
                             </span>
                           </div>
