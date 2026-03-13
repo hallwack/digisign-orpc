@@ -47,6 +47,9 @@ export const documentSignSchema = z.object({
   hash: z.string(),
   rsaPrivateKey: z.string(),
   eddsaPrivateKey: z.string(),
+  signingTime: z.number(),
+  rsaSigningTime: z.number(),
+  eddsaSigningTime: z.number(),
 });
 
 export const documentSignFormSchema = z.object({
