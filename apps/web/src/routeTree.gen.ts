@@ -19,6 +19,7 @@ import { Route as appVerifyRouteImport } from './routes/(app)/verify'
 import { Route as DashboardKeyIndexRouteImport } from './routes/dashboard/key/index'
 import { Route as DashboardDocumentIndexRouteImport } from './routes/dashboard/document/index'
 import { Route as DashboardKeyCreateRouteImport } from './routes/dashboard/key/create'
+import { Route as DashboardDocumentVerifyRouteImport } from './routes/dashboard/document/verify'
 import { Route as DashboardDocumentUploadRouteImport } from './routes/dashboard/document/upload'
 import { Route as DashboardDocumentSignRouteImport } from './routes/dashboard/document/sign'
 
@@ -70,6 +71,11 @@ const DashboardKeyCreateRoute = DashboardKeyCreateRouteImport.update({
   path: '/key/create',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
+const DashboardDocumentVerifyRoute = DashboardDocumentVerifyRouteImport.update({
+  id: '/document/verify',
+  path: '/document/verify',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
 const DashboardDocumentUploadRoute = DashboardDocumentUploadRouteImport.update({
   id: '/document/upload',
   path: '/document/upload',
@@ -89,6 +95,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof AuthRegisterRoute
   '/dashboard/document/sign': typeof DashboardDocumentSignRoute
   '/dashboard/document/upload': typeof DashboardDocumentUploadRoute
+  '/dashboard/document/verify': typeof DashboardDocumentVerifyRoute
   '/dashboard/key/create': typeof DashboardKeyCreateRoute
   '/dashboard/document/': typeof DashboardDocumentIndexRoute
   '/dashboard/key/': typeof DashboardKeyIndexRoute
@@ -101,6 +108,7 @@ export interface FileRoutesByTo {
   '/register': typeof AuthRegisterRoute
   '/dashboard/document/sign': typeof DashboardDocumentSignRoute
   '/dashboard/document/upload': typeof DashboardDocumentUploadRoute
+  '/dashboard/document/verify': typeof DashboardDocumentVerifyRoute
   '/dashboard/key/create': typeof DashboardKeyCreateRoute
   '/dashboard/document': typeof DashboardDocumentIndexRoute
   '/dashboard/key': typeof DashboardKeyIndexRoute
@@ -116,6 +124,7 @@ export interface FileRoutesById {
   '/(app)/': typeof appIndexRoute
   '/dashboard/document/sign': typeof DashboardDocumentSignRoute
   '/dashboard/document/upload': typeof DashboardDocumentUploadRoute
+  '/dashboard/document/verify': typeof DashboardDocumentVerifyRoute
   '/dashboard/key/create': typeof DashboardKeyCreateRoute
   '/dashboard/document/': typeof DashboardDocumentIndexRoute
   '/dashboard/key/': typeof DashboardKeyIndexRoute
@@ -130,6 +139,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/dashboard/document/sign'
     | '/dashboard/document/upload'
+    | '/dashboard/document/verify'
     | '/dashboard/key/create'
     | '/dashboard/document/'
     | '/dashboard/key/'
@@ -142,6 +152,7 @@ export interface FileRouteTypes {
     | '/register'
     | '/dashboard/document/sign'
     | '/dashboard/document/upload'
+    | '/dashboard/document/verify'
     | '/dashboard/key/create'
     | '/dashboard/document'
     | '/dashboard/key'
@@ -156,6 +167,7 @@ export interface FileRouteTypes {
     | '/(app)/'
     | '/dashboard/document/sign'
     | '/dashboard/document/upload'
+    | '/dashboard/document/verify'
     | '/dashboard/key/create'
     | '/dashboard/document/'
     | '/dashboard/key/'
@@ -239,6 +251,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardKeyCreateRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/dashboard/document/verify': {
+      id: '/dashboard/document/verify'
+      path: '/document/verify'
+      fullPath: '/dashboard/document/verify'
+      preLoaderRoute: typeof DashboardDocumentVerifyRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
     '/dashboard/document/upload': {
       id: '/dashboard/document/upload'
       path: '/document/upload'
@@ -273,6 +292,7 @@ const appRouteRouteWithChildren = appRouteRoute._addFileChildren(
 interface DashboardRouteRouteChildren {
   DashboardDocumentSignRoute: typeof DashboardDocumentSignRoute
   DashboardDocumentUploadRoute: typeof DashboardDocumentUploadRoute
+  DashboardDocumentVerifyRoute: typeof DashboardDocumentVerifyRoute
   DashboardKeyCreateRoute: typeof DashboardKeyCreateRoute
   DashboardDocumentIndexRoute: typeof DashboardDocumentIndexRoute
   DashboardKeyIndexRoute: typeof DashboardKeyIndexRoute
@@ -281,6 +301,7 @@ interface DashboardRouteRouteChildren {
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
   DashboardDocumentSignRoute: DashboardDocumentSignRoute,
   DashboardDocumentUploadRoute: DashboardDocumentUploadRoute,
+  DashboardDocumentVerifyRoute: DashboardDocumentVerifyRoute,
   DashboardKeyCreateRoute: DashboardKeyCreateRoute,
   DashboardDocumentIndexRoute: DashboardDocumentIndexRoute,
   DashboardKeyIndexRoute: DashboardKeyIndexRoute,
