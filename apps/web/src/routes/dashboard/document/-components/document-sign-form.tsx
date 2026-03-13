@@ -11,8 +11,8 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { parsePemSections, signEddsa, signRsa } from "@/lib/signer";
-import { orpc } from "@/utils/orpc";
 import { base64ToBlob, downloadBlob } from "@/lib/utils";
+import { orpc } from "@/utils/orpc";
 
 interface SignDocumentFormProps {
   documents: GetAllDocumentResponseSchema;
@@ -63,8 +63,17 @@ export default function DocumentSignForm({ documents }: SignDocumentFormProps) {
       if (!keyId) throw new Error("Invalid key ID");
       if (!rsaKey || !eddsaKey) throw new Error("Invalid keys");
 
+      const startSigningTime = performance.now();
+
+      const startEddsaSigningTime = performance.now();
       const eddsaSignature = signEddsa(documentHash, eddsaKey);
+      const endEddsaSigningTime = performance.now();
+
+      const startRsaSigningTime = performance.now();
       const rsaSignature = signRsa(documentHash, rsaKey);
+      const endRsaSigningTime = performance.now();
+
+      const endSigningTime = performance.now();
 
       mutation.mutate({
         documentId: value.documentId,
@@ -72,6 +81,9 @@ export default function DocumentSignForm({ documents }: SignDocumentFormProps) {
         hash: documentHash,
         rsaPrivateKey: rsaSignature,
         eddsaPrivateKey: eddsaSignature,
+        signingTime: endSigningTime - startSigningTime,
+        eddsaSigningTime: endEddsaSigningTime - startEddsaSigningTime,
+        rsaSigningTime: endRsaSigningTime - startRsaSigningTime,
       });
     },
   });
