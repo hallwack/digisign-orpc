@@ -15,7 +15,7 @@ export default function CTASection() {
             <br />
             dengan Kriptografi
           </h2>
-          <p className="text-muted-foreground mx-auto mb-8 max-w-sm text-base leading-relaxed">
+          <p className="text-muted-foreground mx-auto mb-8 max-w-sm text-sm leading-relaxed">
             Daftar gratis, buat key, dan mulai menandatangani dokumen dalam hitungan menit.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-3">

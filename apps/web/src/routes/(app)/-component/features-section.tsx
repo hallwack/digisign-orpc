@@ -78,7 +78,7 @@ export default function FeaturesSection() {
               key={feature.id}
               className="group border-border bg-card hover:border-primary hover:shadow-primary/10 cursor-default rounded-xl border p-6 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
             >
-              <div className="bg-muted border-border mb-4 flex h-10 w-10 items-center justify-center rounded-lg border">
+              <div className="bg-muted border-border mb-4 flex h-12 w-12 items-center justify-center rounded-lg border">
                 {feature.icon}
               </div>
               <h3 className="tracking-snug text-card-foreground mb-2 font-semibold">{feature.title}</h3>
