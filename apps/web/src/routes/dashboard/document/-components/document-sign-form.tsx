@@ -78,7 +78,6 @@ export default function DocumentSignForm({ documents }: SignDocumentFormProps) {
       mutation.mutate({
         documentId: value.documentId,
         keyId,
-        hash: documentHash,
         rsaPrivateKey: rsaSignature,
         eddsaPrivateKey: eddsaSignature,
         signingTime: endSigningTime - startSigningTime,

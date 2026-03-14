@@ -44,7 +44,6 @@ export const documentIdSchema = z.object({
 export const documentSignSchema = z.object({
   documentId: idSchema,
   keyId: idSchema,
-  hash: z.string(),
   rsaPrivateKey: z.string(),
   eddsaPrivateKey: z.string(),
   signingTime: z.number(),

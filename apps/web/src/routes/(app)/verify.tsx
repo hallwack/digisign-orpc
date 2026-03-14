@@ -5,6 +5,8 @@ import clsx from "clsx";
 import { CheckIcon, FileIcon, Loader2Icon, UploadIcon, XIcon } from "lucide-react";
 import { toast } from "sonner";
 
+import { documentFileUploadSchema } from "@digisign/types";
+
 import BreadcrumbHeader from "@/components/breadcrumb-header";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -59,6 +61,9 @@ function VerifyPageComponent() {
   const form = useForm({
     defaultValues: {
       file: null as unknown as File,
+    },
+    validators: {
+      onSubmit: documentFileUploadSchema,
     },
     onSubmit: async ({ value }) => {
       mutation.mutate(value);
@@ -163,7 +168,7 @@ function VerifyPageComponent() {
                     );
                   }}
                 />
-                <Button type="submit" className="w-full">
+                <Button type="submit" className="w-full cursor-pointer">
                   Submit
                 </Button>
               </form>
@@ -229,6 +234,10 @@ function VerifyPageComponent() {
                             <span className="col-span-2">
                               {mutation.data.dataDetails.documentData.description || "N/A"}
                             </span>
+                            <span className="text-muted-foreground">Document Hash</span>
+                            <span className="col-span-2">
+                              {mutation.data.dataDetails.documentData.hash || "N/A"}
+                            </span>
                           </div>
                         </div>
                       </div>
@@ -271,9 +280,7 @@ function VerifyPageComponent() {
                         )}
 
                         <div>
-                          <div className="text-muted-foreground mb-2 font-semibold">
-                            Validasi Keaslian (Backend)
-                          </div>
+                          <div className="text-muted-foreground mb-2 font-semibold">Validasi Keaslian (Backend)</div>
 
                           <div className="flex items-center justify-between py-1">
                             <span className="text-muted-foreground">RSA 2048</span>
