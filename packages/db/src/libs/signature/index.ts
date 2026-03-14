@@ -23,14 +23,18 @@ export async function verifyDocumentSignature(file: File): Promise<DocumentVerif
     let hasSignature = false;
     let signatureData: SignatureMetadataSchema | undefined;
 
+    let currentPhysicalHash = "";
+
     switch (extension) {
       case ".pdf":
         metadata = await PdfSignature.extractMetadata(fileBuffer);
+        currentPhysicalHash = await PdfSignature.calculateOriginalHash(fileBuffer);
         break;
 
       case ".docx":
       case ".xlsx":
         metadata = await OfficeSignature.extractMetadata(fileBuffer);
+        currentPhysicalHash = await OfficeSignature.calculateOriginalHash(fileBuffer);
         break;
 
       default:
@@ -57,6 +61,7 @@ export async function verifyDocumentSignature(file: File): Promise<DocumentVerif
       metadata,
       hasSignature,
       signatureData,
+      currentPhysicalHash,
     };
   } catch (error) {
     throw new Error(`Failed to verify document signature: ${error instanceof Error ? error.message : "Unknown error"}`);
@@ -124,6 +129,7 @@ export function verifyHybridSignature({
   eddsaPublicKeyPem: string;
 }) {
   try {
+    console.log("Hash Hex:", hashHex);
     const dataToVerify = Buffer.from(hashHex, "hex");
 
     const startVerifyingTime = performance.now();

@@ -121,7 +121,7 @@ export class SignatureService {
     } = result;
 
     const cryptoVerification = verifyHybridSignature({
-      hashHex: fileSignatureData.documentHash,
+      hashHex: extractedMetadata.currentPhysicalHash,
       rsaSignatureBase64: fileSignatureData.rsaSignature,
       rsaPublicKeyPem: keyData.publicKeyRsa,
       eddsaSignatureBase64: fileSignatureData.eddsaSignature,

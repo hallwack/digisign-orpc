@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { promises as fs } from "node:fs";
 import { join } from "node:path";
 import { PDFDocument, PDFName, PDFRawStream, PDFString } from "pdf-lib";
@@ -6,8 +7,8 @@ import { Builder, parseStringPromise } from "xml2js";
 import type { SignatureMetadataSchema } from "@digisign/types";
 
 import { getDocument, separateFilenameWithExt } from "../document";
-import { createSignedFileName } from "./utils";
 import { decodeMetadataStreamToXml } from "./pdf-decoder";
+import { createSignedFileName } from "./utils";
 
 export const PdfSignature = {
   async extractMetadata(fileBuffer: Buffer): Promise<Record<string, string> | null> {
@@ -130,6 +131,21 @@ export const PdfSignature = {
       return builder.buildObject(xmlTemplate);
     } catch (error) {
       throw new Error(`Failed to generate PDF metadata: ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
+  },
+
+  async calculateOriginalHash(fileBuffer: Buffer): Promise<string> {
+    try {
+      const pdfDoc = await PDFDocument.load(fileBuffer);
+
+      const catalog = pdfDoc.catalog;
+      catalog.delete(PDFName.of("Metadata"));
+
+      const strippedPdfBytes = await pdfDoc.save({ useObjectStreams: false });
+
+      return crypto.createHash("sha256").update(strippedPdfBytes).digest("hex");
+    } catch (error) {
+      throw new Error(`Gagal menghitung hash PDF asli: ${error}`);
     }
   },
 };

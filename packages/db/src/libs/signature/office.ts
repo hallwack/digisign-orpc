@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import { promises as fs } from "node:fs";
 import { join } from "node:path";
 import PizZip from "pizzip";
@@ -116,6 +117,53 @@ export const OfficeSignature = {
     } catch (error) {
       console.warn(`Failed to parse existing custom.xml, using default structure: ${error}`);
       return defaultStructure;
+    }
+  },
+
+  async calculateOriginalHash(fileBuffer: Buffer): Promise<string> {
+    try {
+      // 1. Muat file DOCX/XLSX sebagai arsip ZIP
+      const zip = new PizZip(fileBuffer);
+      const customXmlFile = zip.file(CUSTOM_XML_PATH);
+
+      if (customXmlFile) {
+        const xmlContent = customXmlFile.asText();
+        const parsedXml = await parseStringPromise(xmlContent);
+
+        // 2. Cabut "stiker" (Filter out properti buatan sistem DigiSign)
+        if (parsedXml?.Properties?.property) {
+          const ourFields = ["documentHash", "documentId", "keyId", "rsaSignature", "eddsaSignature", "createdAt"];
+
+          parsedXml.Properties.property = parsedXml.Properties.property.filter((prop: any) => {
+            const propName = prop.$?.name;
+            // Jika properti ini adalah buatan kita, buang (return false)
+            if (propName && ourFields.includes(propName)) {
+              return false;
+            }
+            // Jika bukan buatan kita (misal: properti asli dokumen), pertahankan
+            return true;
+          });
+        }
+
+        // 3. Kembalikan ke format XML murni
+        const builder = new Builder({
+          headless: true,
+          renderOpts: { pretty: true },
+          xmldec: { version: "1.0", encoding: "UTF-8" },
+        });
+        const strippedXml = builder.buildObject(parsedXml);
+
+        // 4. Timpa file custom.xml di dalam memori ZIP
+        zip.file(CUSTOM_XML_PATH, strippedXml);
+      }
+
+      // 5. Timbang ulang (Generate ulang file biner DOCX/XLSX)
+      const strippedOfficeBuffer = zip.generate({ type: "nodebuffer" });
+
+      // 6. Hitung Hash
+      return crypto.createHash("sha256").update(strippedOfficeBuffer).digest("hex");
+    } catch (error) {
+      throw new Error(`Gagal menghitung hash Office asli: ${error}`);
     }
   },
 };
