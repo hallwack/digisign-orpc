@@ -40,11 +40,9 @@ function RootComponent() {
   const [client] = useState<AppRouterClient>(() => createORPCClient(link));
 
   return (
-    <>
-      <RootProvider>
-        <HeadContent />
-        <Outlet />
-      </RootProvider>
-    </>
+    <RootProvider>
+      <HeadContent />
+      <Outlet />
+    </RootProvider>
   );
 }
