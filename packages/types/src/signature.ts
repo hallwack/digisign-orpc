@@ -35,6 +35,7 @@ export const documentVerificationResultSchema = z.object({
   metadata: z.record(z.string(), z.string()).nullable(),
   hasSignature: z.boolean(),
   signatureData: signatureMetadataSchema.optional(),
+  currentPhysicalHash: z.string(),
 });
 
 export const pemResultSchema = z.object({
