@@ -20,6 +20,7 @@
     "@dnd-kit/modifiers": "^9.0.0",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
+    "@fontsource-variable/geist-mono": "^5.2.7",
     "@fontsource-variable/noto-sans": "^5.2.10",
     "@hookform/resolvers": "^5.1.1",
     "@noble/curves": "^2.0.1",
