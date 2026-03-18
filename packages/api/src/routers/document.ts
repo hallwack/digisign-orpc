@@ -73,6 +73,19 @@ export const documentRouter = {
     .handler(async ({ input }) => {
       return SignatureService.verifyDocument(input);
     }),
+  resign: protectedProcedure
+    .route({
+      path: "/document/resign",
+      method: "POST",
+      inputStructure: "detailed",
+      tags: ["Document"],
+      summary: "Resign Document",
+      description: "Resign a document by ID",
+    })
+    .input(documentSignSchema)
+    .handler(async ({ input, context }) => {
+      return SignatureService.resignDocument(input, context.session.user.id);
+    }),
   delete: protectedProcedure
     .route({
       path: "/document",
