@@ -99,7 +99,6 @@ export class KeyService {
       publicKeyEddsa,
       userId,
     });
-
     if (!key) throw new Error("Failed to create key");
 
     const sanitizedKeyName = keyName.replace(/\s+/g, "-");
@@ -115,25 +114,26 @@ export class KeyService {
   }
 
   static async regenerateKey(keyId: string, userId: string) {
+    const existingKey = await db.query.keyTable.findFirst({
+      where: (keyTable, { and, eq }) => and(eq(keyTable.id, keyId), eq(keyTable.userId, userId)),
+    });
+    if (!existingKey) throw new Error("Key not found or unauthorized");
+
+    await db.update(keyTable).set({ revokedAt: new Date() }).where(eq(keyTable.id, keyId));
+
     const { publicKeyRsa, privateKeyRsa, publicKeyEddsa, privateKeyEddsa } = generateKeys();
-
-    const deleteKey = await db.delete(keyTable).where(eq(keyTable.id, keyId)).returning({ keyName: keyTable.keyName });
-
-    if (!deleteKey) throw new Error("Key not found");
-
     const id = generateId();
 
     const key = await db.insert(keyTable).values({
       id,
       userId,
-      keyName: deleteKey[0]!.keyName,
+      keyName: existingKey.keyName,
       publicKeyRsa,
       publicKeyEddsa,
     });
-
     if (!key) throw new Error("Failed to create key");
 
-    const sanitizedKeyName = deleteKey[0]!.keyName.replace(/\s+/g, "-");
+    const sanitizedKeyName = existingKey!.keyName.replace(/\s+/g, "-");
     const fileName = `${sanitizedKeyName}-private-keys.pem`;
 
     const combinedPrivateKey = combinedKeys(id, privateKeyRsa, privateKeyEddsa);
@@ -147,27 +147,23 @@ export class KeyService {
 
   static async deleteKey(params: string) {
     const { id } = parseSlug(params);
-
-    if (!id) {
-      throw new Error("Invalid key ID");
-    }
+    if (!id) throw new Error("Invalid key ID");
 
     const checkKey = await db.query.keyTable.findFirst({
       where: (keyTable, { eq }) => eq(lowerSql(keyTable.id), id),
     });
+    if (!checkKey) throw new Error("Key not found");
 
-    if (!checkKey) {
-      throw new Error("Key not found");
-    }
-
-    const deleteKey = await db
-      .delete(keyTable)
+    const revokedKey = await db
+      .update(keyTable)
+      .set({ revokedAt: new Date() })
       .where(eq(lowerSql(keyTable.id), id))
       .returning();
+    if (!revokedKey || revokedKey.length === 0) throw new Error("Invalid key ID");
 
-    if (!deleteKey) {
-      throw new Error("Invalid key ID");
-    }
+    return {
+      message: "Key revoked successfully",
+    };
   }
 
   static async verifyKey({ documentHash, documentId, rsaSignature, eddsaSignature }: SignatureMetadataSchema) {
