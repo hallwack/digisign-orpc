@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { FileIcon } from "lucide-react";
 
 export default function FooterSection() {
@@ -8,9 +9,9 @@ export default function FooterSection() {
           <div className="bg-primary text-primary-foreground flex h-8 w-8 items-center justify-center rounded-md p-2">
             <FileIcon size={16} />
           </div>
-          <span className="font-display text-foreground text-sm font-bold tracking-tight">
+          <Link to="/" className="font-display text-foreground font-bold tracking-tight">
             Veri<span className="text-primary">doc</span>
-          </span>
+          </Link>
         </div>
         <div className="flex items-center gap-6">
           <a href="#" className="text-muted-foreground hover:text-foreground text-sm no-underline transition-colors">
