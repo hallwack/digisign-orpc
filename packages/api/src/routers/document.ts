@@ -8,7 +8,7 @@ import {
   documentUploadSchema,
 } from "@digisign/types";
 
-import { protectedProcedure } from "..";
+import { protectedProcedure, publicProcedure } from "..";
 
 export const documentRouter = {
   getAll: protectedProcedure
@@ -60,7 +60,7 @@ export const documentRouter = {
     .handler(async ({ input }) => {
       return SignatureService.signDocument(input);
     }),
-  verify: protectedProcedure
+  verify: publicProcedure
     .route({
       path: "/document/verify",
       method: "POST",
