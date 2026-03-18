@@ -1,20 +1,43 @@
 import { SQL, and, asc, count, desc, eq, gte, ilike, lte } from "drizzle-orm";
 import { mkdirSync, rmSync } from "node:fs";
+import path from "node:path";
 import { join, resolve } from "node:path";
 
-import type { DocumentDataTableRequestSchema, DocumentDataTableResponseSchema, DocumentUploadSchema } from "@digisign/types";
+import type {
+  DocumentDataTableRequestSchema,
+  DocumentDataTableResponseSchema,
+  DocumentUploadSchema,
+} from "@digisign/types";
 
 import { db } from "..";
 import { directoryExists } from "../libs/directory";
-import { getDocumentHash, getHumanReadableFileSize } from "../libs/document";
+import { getHumanReadableFileSize } from "../libs/document";
 import { lowerSql } from "../libs/parse";
 import { generateId } from "../libs/random";
+import { OfficeSignature } from "../libs/signature/office";
+import { PdfSignature } from "../libs/signature/pdf";
 import { convertToSlug, parseSlug } from "../libs/slug";
 import { documentTable, signatureTable } from "../tables";
 
 export class DocumentService {
   static async uploadDocument(form: DocumentUploadSchema, userId: string | undefined) {
-    const documentHash = await getDocumentHash(form.file);
+    const rawBuffer = Buffer.from(await form.file.arrayBuffer());
+    const extension = path.extname(form.file.name).toLowerCase();
+
+    let documentHash = "";
+
+    switch (extension) {
+      case ".pdf":
+        documentHash = await PdfSignature.calculateOriginalHash(rawBuffer);
+        break;
+      case ".docx":
+      case ".xlsx":
+        documentHash = await OfficeSignature.calculateOriginalHash(rawBuffer);
+        break;
+      default:
+        throw new Error(`Unsupported file extension: ${extension}`);
+    }
+
     const storagePath = resolve(process.cwd(), "../../storage/documents");
 
     const documentId = generateId();
@@ -155,10 +178,7 @@ export class DocumentService {
         params.sort.length > 0
           ? params.sort.map((item) => {
               // Tentukan kolom berdasarkan ID sort
-              const column =
-                item.id === "signedAt"
-                  ? signatureTable.signedAt
-                  : documentTable[item.id];
+              const column = item.id === "signedAt" ? signatureTable.signedAt : documentTable[item.id];
 
               return item.desc ? desc(column) : asc(column);
             })

@@ -124,46 +124,23 @@ export const OfficeSignature = {
     try {
       // 1. Muat file DOCX/XLSX sebagai arsip ZIP
       const zip = new PizZip(fileBuffer);
-      const customXmlFile = zip.file(CUSTOM_XML_PATH);
 
-      if (customXmlFile) {
-        const xmlContent = customXmlFile.asText();
-        const parsedXml = await parseStringPromise(xmlContent);
-
-        // 2. Cabut "stiker" (Filter out properti buatan sistem DigiSign)
-        if (parsedXml?.Properties?.property) {
-          const ourFields = ["documentHash", "documentId", "keyId", "rsaSignature", "eddsaSignature", "createdAt"];
-
-          parsedXml.Properties.property = parsedXml.Properties.property.filter((prop: any) => {
-            const propName = prop.$?.name;
-            // Jika properti ini adalah buatan kita, buang (return false)
-            if (propName && ourFields.includes(propName)) {
-              return false;
-            }
-            // Jika bukan buatan kita (misal: properti asli dokumen), pertahankan
-            return true;
-          });
-        }
-
-        // 3. Kembalikan ke format XML murni
-        const builder = new Builder({
-          headless: true,
-          renderOpts: { pretty: true },
-          xmldec: { version: "1.0", encoding: "UTF-8" },
-        });
-        const strippedXml = builder.buildObject(parsedXml);
-
-        // 4. Timpa file custom.xml di dalam memori ZIP
-        zip.file(CUSTOM_XML_PATH, strippedXml);
+      // 2. Cari file utama (document.xml untuk DOCX, workbook.xml untuk XLSX)
+      const docContent = zip.file("word/document.xml")?.asText() || zip.file("xl/workbook.xml")?.asText();
+      if (!docContent) {
+        throw new Error("Gagal menemukan konten utama dalam file Office (document.xml atau workbook.xml)");
       }
 
-      // 5. Timbang ulang (Generate ulang file biner DOCX/XLSX)
-      const strippedOfficeBuffer = zip.generate({ type: "nodebuffer" });
-
-      // 6. Hitung Hash
-      return crypto.createHash("sha256").update(strippedOfficeBuffer).digest("hex");
+      // 3. Hitung hash SHA-256 dari konten utama
+      return crypto.createHash("sha256").update(docContent).digest("hex");
     } catch (error) {
       throw new Error(`Gagal menghitung hash Office asli: ${error}`);
     }
+  },
+
+  async normalize(fileBuffer: Buffer): Promise<Buffer> {
+    const zip = new PizZip(fileBuffer);
+    const normalizedOfficeBuffer = zip.generate({ type: "nodebuffer" });
+    return normalizedOfficeBuffer;
   },
 };

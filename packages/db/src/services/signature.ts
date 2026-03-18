@@ -93,6 +93,15 @@ export class SignatureService {
 
     const fileSignatureData = extractedMetadata.signatureData;
 
+    const isContentIntact = extractedMetadata.currentPhysicalHash === fileSignatureData.documentHash;
+    if (!isContentIntact) {
+      return {
+        ...defaultReturn,
+        message:
+          "Document content is intact and matches the original hash. No tampering detected. Proceeding to cryptographic verification.",
+      };
+    }
+
     const [result] = await db
       .select({
         signature: signatureTable,
@@ -113,12 +122,7 @@ export class SignatureService {
       };
     }
 
-    const {
-      user: userData,
-      key: keyData,
-      document: documentData,
-      signature: signatureData,
-    } = result;
+    const { user: userData, key: keyData, document: documentData, signature: signatureData } = result;
 
     const cryptoVerification = verifyHybridSignature({
       hashHex: extractedMetadata.currentPhysicalHash,

@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import { promises as fs } from "node:fs";
 import { join } from "node:path";
-import { PDFDocument, PDFName, PDFRawStream, PDFString } from "pdf-lib";
+import { PDFArray, PDFDocument, PDFName, PDFRawStream, PDFString } from "pdf-lib";
 import { Builder, parseStringPromise } from "xml2js";
 
 import type { SignatureMetadataSchema } from "@digisign/types";
@@ -136,16 +136,49 @@ export const PdfSignature = {
 
   async calculateOriginalHash(fileBuffer: Buffer): Promise<string> {
     try {
+      // 1. Muat file PDF menggunakan pdf-lib
       const pdfDoc = await PDFDocument.load(fileBuffer);
 
-      const catalog = pdfDoc.catalog;
-      catalog.delete(PDFName.of("Metadata"));
+      // 2. Ambil semua konten dari halaman PDF dan gabungkan menjadi satu string
+      const pages = pdfDoc.getPages();
+      let coreContentStr = "";
 
-      const strippedPdfBytes = await pdfDoc.save({ useObjectStreams: false });
+      // 3. Gabungkan konten dari semua halaman untuk dihitung hash-nya
+      for (const page of pages) {
+        // Ambil konten utama dari halaman (Contents)
+        const contentsNode = page.node.get(PDFName.of("Contents"));
+        // Jika Contents adalah array, gabungkan semua referensi konten; jika bukan, gunakan langsung
+        if (contentsNode) {
+          // Konten bisa berupa array atau stream tunggal
+          if (contentsNode instanceof PDFArray) {
+            // Jika Contents adalah array, gabungkan semua referensi konten
+            for (let i = 0; i < contentsNode.size(); i++) {
+              // Ambil referensi konten dan gabungkan isinya
+              const ref = contentsNode.get(i);
+              // Ambil konten dari referensi dan gabungkan ke string utama
+              coreContentStr += ref.toString();
+            }
+          } else {
+            // Jika Contents adalah stream tunggal, langsung gabungkan isinya
+            coreContentStr += contentsNode.toString();
+          }
+        }
+      }
 
-      return crypto.createHash("sha256").update(strippedPdfBytes).digest("hex");
+      if (!coreContentStr) {
+        throw new Error("Dokumen PDF tidak memiliki konten yang dapat dihitung hash-nya.");
+      }
+
+      // 4. Hitung hash SHA-256 dari konten utama PDF
+      return crypto.createHash("sha256").update(coreContentStr).digest("hex");
     } catch (error) {
       throw new Error(`Gagal menghitung hash PDF asli: ${error}`);
     }
+  },
+
+  async normalize(fileBuffer: Buffer): Promise<Buffer> {
+    const pdfDoc = await PDFDocument.load(fileBuffer);
+    const normalizedPdfBytes = await pdfDoc.save({ useObjectStreams: false });
+    return Buffer.from(normalizedPdfBytes);
   },
 };
