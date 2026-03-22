@@ -11,7 +11,7 @@ import {
 import { protectedProcedure, publicProcedure } from "..";
 
 export const documentRouter = {
-  getAll: protectedProcedure
+  all: protectedProcedure
     .route({
       path: "/document",
       method: "GET",
@@ -21,6 +21,18 @@ export const documentRouter = {
     })
     .handler(async ({ context }) => {
       return DocumentService.getAllDocuments(context.session.user.id);
+    }),
+  detail: protectedProcedure
+    .route({
+      path: "/document/{id}",
+      method: "GET",
+      tags: ["Document"],
+      summary: "Get Document Detail",
+      description: "Retrieve detailed information of a document by ID",
+    })
+    .input(documentIdSchema)
+    .handler(async ({ input }) => {
+      return DocumentService.getDocumentById(input.id);
     }),
   datalist: protectedProcedure
     .route({
