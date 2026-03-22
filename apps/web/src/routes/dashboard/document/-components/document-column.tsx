@@ -17,11 +17,15 @@ import { convertToSlug, formatDate } from "@/lib/format";
 
 interface UseDocumentColumnsProps {
   onViewDocument?: (id: string) => void;
-  onSignDocument?: (id: string) => void;
+  onResignDocument?: (id: string) => void;
   onDeleteDocument?: (id: string) => void;
 }
 
-export function useDocumentColumns({ onViewDocument, onSignDocument, onDeleteDocument }: UseDocumentColumnsProps = {}) {
+export function useDocumentColumns({
+  onViewDocument,
+  onResignDocument,
+  onDeleteDocument,
+}: UseDocumentColumnsProps = {}) {
   const columns = useMemo<ColumnDef<DocumentTableItemSchema>[]>(
     () => [
       {
@@ -71,7 +75,6 @@ export function useDocumentColumns({ onViewDocument, onSignDocument, onDeleteDoc
         header: "Actions",
         cell: ({ row }) => {
           const url = convertToSlug(`${row.original.title}-${row.original.id}`);
-
           return (
             <DropdownMenu>
               <DropdownMenuTrigger
@@ -88,10 +91,12 @@ export function useDocumentColumns({ onViewDocument, onSignDocument, onDeleteDoc
                     <EyeIcon className="mr-2 h-4 w-4" />
                     View Document
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="cursor-pointer" onClick={() => onSignDocument?.(row.original.id)}>
-                    <KeyIcon className="mr-2 h-4 w-4" />
-                    Sign Document
-                  </DropdownMenuItem>
+                  {row.original.signedAt && (
+                    <DropdownMenuItem className="cursor-pointer" onClick={() => onResignDocument?.(row.original.id)}>
+                      <KeyIcon className="mr-2 h-4 w-4" />
+                      Resign Document
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem
                     className="text-destructive focus:text-destructive cursor-pointer"
                     onClick={() => onDeleteDocument?.(url)}
@@ -107,7 +112,7 @@ export function useDocumentColumns({ onViewDocument, onSignDocument, onDeleteDoc
         size: 24,
       },
     ],
-    [onViewDocument, onSignDocument, onDeleteDocument],
+    [onViewDocument, onResignDocument, onDeleteDocument],
   );
 
   return columns;
