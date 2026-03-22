@@ -60,6 +60,10 @@ export const documentFileUploadSchema = z.object({
   file: documentFileSchema,
 });
 
+export const documentKeyUploadSchema = z.object({
+  file: documentKeySchema,
+});
+
 export const documentVerifySchema = z.object({
   document: documentFileSchema,
 });
