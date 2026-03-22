@@ -1,4 +1,5 @@
 import { and, eq } from "drizzle-orm";
+import { existsSync, rmSync } from "node:fs";
 import path, { join, resolve } from "node:path";
 
 import type { DocumentFileUploadSchema, DocumentSignSchema } from "@digisign/types";
@@ -180,6 +181,11 @@ export class SignatureService {
     });
     if (!document) throw new Error("Document not found or unauthorized");
 
+    const existingSignature = await db.query.signatureTable.findFirst({
+      where: (signatureTable, { eq }) => eq(signatureTable.documentId, document.id),
+    });
+    if (!existingSignature) throw new Error("Document has not been signed yet");
+
     const newKeyRecord = await db.query.keyTable.findFirst({
       where: (keyTable, { and, eq }) => and(eq(keyTable.id, form.keyId), eq(keyTable.userId, userId)),
     });
@@ -193,6 +199,12 @@ export class SignatureService {
     const extension = path.extname(document.fileName);
     const baseName = path.basename(document.fileName, extension);
     const signedFileName = `${baseName}-signed${extension}`;
+    const signedFilePath = join(filePath, signedFileName);
+
+    if (existsSync(signedFilePath)) {
+      rmSync(signedFilePath, { force: true });
+      console.log(`Existing signed file ${signedFileName} removed before re-signing.`);
+    }
 
     await appendSignature(filePath, signedFileName, {
       documentHash: document.hash,
