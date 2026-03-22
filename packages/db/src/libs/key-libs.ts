@@ -1,5 +1,7 @@
 import crypto from "node:crypto";
 
+import { NotFoundError } from "./errors";
+
 interface PemResult {
   id?: string;
   rsaKey?: string;
@@ -62,7 +64,7 @@ export function parseCombinedKeys(pemText: string) {
   const eddsaMatch = pemText.match(/-----BEGIN EDDSA PRIVATE KEY-----([\s\S]*?)-----END EDDSA PRIVATE KEY-----/);
 
   if (!rsaMatch || !eddsaMatch || !rsaMatch[1] || !eddsaMatch[1]) {
-    throw new Error("Invalid PEM format: RSA or EDDSA key not found");
+    throw new NotFoundError("Invalid PEM format: RSA or EDDSA key not found");
   }
 
   return { rsaKey: rsaMatch[1].trim(), eddsaKey: eddsaMatch[1].trim() };
@@ -76,7 +78,7 @@ export function parsePemSections(pem: string): PemResult {
   let match;
   while ((match = regex.exec(pem)) !== null) {
     if (!match[1] || !match[2]) {
-      throw new Error("Invalid PEM format: Missing label or body");
+      throw new NotFoundError("Invalid PEM format: Missing label or body");
     }
 
     const label = match[1].trim();

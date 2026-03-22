@@ -3,6 +3,7 @@ import path from "node:path";
 
 import type { DocumentVerificationResultSchema, SignatureMetadataSchema } from "@digisign/types";
 
+import { InternalError, ValidationError } from "../errors";
 import { SUPPORTED_EXTENSIONS } from "./constant";
 import { OfficeSignature } from "./office";
 import { PdfSignature } from "./pdf";
@@ -14,7 +15,7 @@ export async function verifyDocumentSignature(file: File): Promise<DocumentVerif
     const extension = path.extname(file.name).toLowerCase();
 
     if (!isSupportedExtension(extension)) {
-      throw new Error(
+      throw new ValidationError(
         `Unsupported file extension: ${extension}. Supported extensions are: ${SUPPORTED_EXTENSIONS.join(", ")}`,
       );
     }
@@ -38,7 +39,7 @@ export async function verifyDocumentSignature(file: File): Promise<DocumentVerif
         break;
 
       default:
-        throw new Error(`Unsupported file type: ${extension}`);
+        throw new ValidationError(`Unsupported file type: ${extension}`);
     }
 
     // Check if the metadata contains signature information
@@ -64,20 +65,23 @@ export async function verifyDocumentSignature(file: File): Promise<DocumentVerif
       currentPhysicalHash,
     };
   } catch (error) {
-    throw new Error(`Failed to verify document signature: ${error instanceof Error ? error.message : "Unknown error"}`);
+    if (error instanceof ValidationError) throw error;
+    throw new InternalError(
+      `Failed to verify document signature: ${error instanceof Error ? error.message : "Unknown error"}`,
+    );
   }
 }
 
 export async function appendSignature(filePath: string, docName: string, metaData: SignatureMetadataSchema) {
   try {
     if (!filePath || !docName || !metaData) {
-      throw new Error("Missing required parameters");
+      throw new InternalError("Missing required parameters");
     }
 
     const extension = path.extname(docName).toLowerCase();
 
     if (!isSupportedExtension(extension)) {
-      throw new Error(
+      throw new ValidationError(
         `Unsupported file extension: ${extension}. Supported extensions are: ${SUPPORTED_EXTENSIONS.join(", ")}`,
       );
     }
@@ -93,7 +97,7 @@ export async function appendSignature(filePath: string, docName: string, metaDat
 
     for (const field of requiredFields) {
       if (!metaData[field] || typeof metaData[field] !== "string") {
-        throw new Error(`Missing required metadata field: ${field}`);
+        throw new InternalError(`Missing required metadata field: ${field}`);
       }
     }
 
@@ -108,10 +112,12 @@ export async function appendSignature(filePath: string, docName: string, metaDat
         break;
 
       default:
-        throw new Error(`Unsupported file type: ${extension}`);
+        throw new ValidationError(`Unsupported file type: ${extension}`);
     }
   } catch (error) {
-    throw new Error(`Failed to append signature: ${error instanceof Error ? error.message : "Unknown error"}`);
+    if (error instanceof ValidationError) throw error;
+    if (error instanceof InternalError) throw error;
+    throw new InternalError(`Failed to append signature: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 }
 
@@ -129,7 +135,6 @@ export function verifyHybridSignature({
   eddsaPublicKeyPem: string;
 }) {
   try {
-    console.log("Hash Hex:", hashHex);
     const dataToVerify = Buffer.from(hashHex, "hex");
 
     const startVerifyingTime = performance.now();

@@ -1,3 +1,5 @@
+import { InternalError } from "./errors";
+
 function expandAlphabet(alphabet: string) {
   switch (alphabet) {
     case "a-z":
@@ -9,7 +11,7 @@ function expandAlphabet(alphabet: string) {
     case "-_":
       return "-_";
     default:
-      throw new Error(`Unsupported alphabet: ${alphabet}`);
+      throw new InternalError(`Unsupported alphabet: ${alphabet}`);
   }
 }
 
@@ -17,14 +19,14 @@ function createRandomStringGenerator(...baseAlphabets: string[]) {
   const baseCharSet = baseAlphabets.map(expandAlphabet).join("");
 
   if (baseCharSet.length === 0) {
-    throw new Error("No valid characters provided for random string generation.");
+    throw new InternalError("No valid characters provided for random string generation.");
   }
 
   const baseCharSetLength = baseCharSet.length;
 
   return (length: number, ...alphabets: string[]) => {
     if (length <= 0) {
-      throw new Error("Length must be a positive integer.");
+      throw new InternalError("Length must be a positive integer.");
     }
 
     let charSet = baseCharSet;
@@ -63,7 +65,7 @@ function createRandomStringGenerator(...baseAlphabets: string[]) {
 }
 
 const generateId = (size?: number) => {
-	return createRandomStringGenerator("a-z", "A-Z", "0-9")(size || 32);
+  return createRandomStringGenerator("a-z", "A-Z", "0-9")(size || 32);
 };
 
 export { createRandomStringGenerator, generateId };

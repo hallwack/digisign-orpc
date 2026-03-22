@@ -10,20 +10,19 @@ import { generateId } from "../libs/random";
 import { appendSignature, verifyDocumentSignature, verifyHybridSignature } from "../libs/signature";
 import { convertToSlug } from "../libs/slug";
 import { documentTable, keyTable, signatureTable, userTable } from "../tables";
+import { InternalError, NotFoundError, ValidationError } from "../libs/errors";
 
 export class SignatureService {
   static async signDocument(form: DocumentSignSchema) {
     const document = await db.query.documentTable.findFirst({
       where: (documentTable, { eq }) => eq(documentTable.id, form.documentId),
     });
-
-    if (!document) throw new Error("Document not found");
+    if (!document) throw new NotFoundError("Document not found");
 
     const publicKeyRecord = await db.query.keyTable.findFirst({
       where: (keyTable, { eq }) => eq(keyTable.id, form.keyId),
     });
-
-    if (!publicKeyRecord) throw new Error("Public key not found");
+    if (!publicKeyRecord) throw new NotFoundError("Public key not found");
 
     const verification = verifyHybridSignature({
       hashHex: document.hash,
@@ -34,7 +33,7 @@ export class SignatureService {
     });
 
     if (!verification.isAuthentic)
-      throw new Error(
+      throw new ValidationError(
         `Invalid digital signature. RSA Valid: ${verification.rsaValid}. EdDSA Valid: ${verification.eddsaValid}`,
       );
 
@@ -64,8 +63,7 @@ export class SignatureService {
       eddsaSigningDuration: form.eddsaSigningTime,
       signedAt: new Date(),
     });
-
-    if (!signatureRecord) throw new Error("Failed to sign document");
+    if (!signatureRecord) throw new InternalError("Failed to sign document");
 
     return {
       fileData: Buffer.from(documentContent).toString("base64"),
@@ -179,18 +177,18 @@ export class SignatureService {
       where: (documentTable, { and, eq }) =>
         and(eq(documentTable.id, form.documentId), eq(documentTable.userId, userId)),
     });
-    if (!document) throw new Error("Document not found or unauthorized");
+    if (!document) throw new NotFoundError("Document not found or unauthorized");
 
     const existingSignature = await db.query.signatureTable.findFirst({
       where: (signatureTable, { eq }) => eq(signatureTable.documentId, document.id),
     });
-    if (!existingSignature) throw new Error("Document has not been signed yet");
+    if (!existingSignature) throw new NotFoundError("Document has not been signed yet");
 
     const newKeyRecord = await db.query.keyTable.findFirst({
       where: (keyTable, { and, eq }) => and(eq(keyTable.id, form.keyId), eq(keyTable.userId, userId)),
     });
-    if (!newKeyRecord) throw new Error("Public key not found or unauthorized");
-    if (newKeyRecord.revokedAt !== null) throw new Error("Public key has been revoked");
+    if (!newKeyRecord) throw new NotFoundError("Public key not found or unauthorized");
+    if (newKeyRecord.revokedAt !== null) throw new ValidationError("Public key has been revoked");
 
     const dirName = convertToSlug(`${document.title}-${document.id}`);
     const storagePath = resolve(process.cwd(), "../../storage/documents");
@@ -230,9 +228,8 @@ export class SignatureService {
       })
       .where(eq(signatureTable.documentId, document.id))
       .returning();
-
     if (!updatedSignature || updatedSignature.length === 0) {
-      throw new Error("Failed to update signature in database");
+      throw new InternalError("Failed to update signature in database");
     }
 
     return {

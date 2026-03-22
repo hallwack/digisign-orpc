@@ -7,6 +7,7 @@ import { Builder, parseStringPromise } from "xml2js";
 import type { CustomOfficePropertySchema, CustomXmlStructureSchema, SignatureMetadataSchema } from "@digisign/types";
 
 import { getDocument, separateFilenameWithExt } from "../document";
+import { InternalError } from "../errors";
 import { CUSTOM_PROPERTY_FMTID, CUSTOM_XML_PATH, OFFICE_NAMESPACES } from "./constant";
 import { createSignedFileName } from "./utils";
 
@@ -128,13 +129,14 @@ export const OfficeSignature = {
       // 2. Cari file utama (document.xml untuk DOCX, workbook.xml untuk XLSX)
       const docContent = zip.file("word/document.xml")?.asText() || zip.file("xl/workbook.xml")?.asText();
       if (!docContent) {
-        throw new Error("Gagal menemukan konten utama dalam file Office (document.xml atau workbook.xml)");
+        throw new InternalError("Gagal menemukan konten utama dalam file Office (document.xml atau workbook.xml)");
       }
 
       // 3. Hitung hash SHA-256 dari konten utama
       return crypto.createHash("sha256").update(docContent).digest("hex");
     } catch (error) {
-      throw new Error(`Gagal menghitung hash Office asli: ${error}`);
+      if (error instanceof InternalError) throw error;
+      throw new InternalError(`Gagal menghitung hash Office asli: ${error}`);
     }
   },
 

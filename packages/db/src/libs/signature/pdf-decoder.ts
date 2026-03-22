@@ -1,6 +1,8 @@
 import { inflateRawSync, inflateSync, unzipSync } from "node:zlib";
 import { PDFName } from "pdf-lib";
 
+import { InternalError } from "../errors";
+
 export function asciiHexDecode(s: string): Uint8Array {
   s = s.replace(/\s+/g, "");
   const endIdx = s.indexOf(">");
@@ -141,7 +143,7 @@ export async function decodeMetadataStreamToXml(metadataStream: any): Promise<st
                   }
                 }
               }
-              if (!worked) throw new Error("FlateDecode attempts all failed: " + decodeErrors.join(" | "));
+              if (!worked) throw new InternalError("FlateDecode attempts all failed: " + decodeErrors.join(" | "));
             }
           }
         }
@@ -154,14 +156,14 @@ export async function decodeMetadataStreamToXml(metadataStream: any): Promise<st
       } else if (f === "RunLengthDecode") {
         bytes = Buffer.from(runLengthDecode(new Uint8Array(bytes)));
       } else if (f === "LZWDecode") {
-        throw new Error(
+        throw new InternalError(
           "Encountered LZWDecode. Node.js has no built-in LZW decoder — add a package or decode earlier filters first.",
         );
       } else {
-        throw new Error(`Unsupported filter: ${f}`);
+        throw new InternalError(`Unsupported filter: ${f}`);
       }
     } catch (err: any) {
-      throw new Error(`Failed decoding filter ${f}: ${err.message}\nTrace: ${decodeErrors.join(" | ")}`);
+      throw new InternalError(`Failed decoding filter ${f}: ${err.message}\nTrace: ${decodeErrors.join(" | ")}`);
     }
   }
 

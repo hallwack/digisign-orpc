@@ -3,6 +3,7 @@ import { and, asc, count, desc, eq, gte, ilike, lte } from "drizzle-orm";
 import type { KeyDataTableRequestSchema, KeyDataTableResponseSchema, SignatureMetadataSchema } from "@digisign/types";
 
 import { db } from "..";
+import { InternalError, NotFoundError, ValidationError } from "../libs/errors";
 import { combinedKeys, generateKeys, verifyEddsa, verifyRsa } from "../libs/key-libs";
 import { lowerSql } from "../libs/parse";
 import { generateId } from "../libs/random";
@@ -83,7 +84,7 @@ export class KeyService {
       };
     } catch (error) {
       console.error("Error fetching document datalist:", error);
-      throw new Error("Failed to fetch document datalist");
+      throw new InternalError("Failed to fetch document datalist");
     }
   }
 
@@ -99,7 +100,7 @@ export class KeyService {
       publicKeyEddsa,
       userId,
     });
-    if (!key) throw new Error("Failed to create key");
+    if (!key) throw new InternalError("Failed to create key");
 
     const sanitizedKeyName = keyName.replace(/\s+/g, "-");
     const fileName = `${sanitizedKeyName}-private-keys.pem`;
@@ -117,7 +118,7 @@ export class KeyService {
     const existingKey = await db.query.keyTable.findFirst({
       where: (keyTable, { and, eq }) => and(eq(keyTable.id, keyId), eq(keyTable.userId, userId)),
     });
-    if (!existingKey) throw new Error("Key not found or unauthorized");
+    if (!existingKey) throw new NotFoundError("Key not found or unauthorized");
 
     await db.update(keyTable).set({ revokedAt: new Date() }).where(eq(keyTable.id, keyId));
 
@@ -131,7 +132,7 @@ export class KeyService {
       publicKeyRsa,
       publicKeyEddsa,
     });
-    if (!key) throw new Error("Failed to create key");
+    if (!key) throw new InternalError("Failed to create key");
 
     const sanitizedKeyName = existingKey!.keyName.replace(/\s+/g, "-");
     const fileName = `${sanitizedKeyName}-private-keys.pem`;
@@ -147,19 +148,19 @@ export class KeyService {
 
   static async deleteKey(params: string) {
     const { id } = parseSlug(params);
-    if (!id) throw new Error("Invalid key ID");
+    if (!id) throw new ValidationError("Invalid key ID");
 
     const checkKey = await db.query.keyTable.findFirst({
       where: (keyTable, { eq }) => eq(lowerSql(keyTable.id), id),
     });
-    if (!checkKey) throw new Error("Key not found");
+    if (!checkKey) throw new NotFoundError("Key not found");
 
     const revokedKey = await db
       .update(keyTable)
       .set({ revokedAt: new Date() })
       .where(eq(lowerSql(keyTable.id), id))
       .returning();
-    if (!revokedKey || revokedKey.length === 0) throw new Error("Invalid key ID");
+    if (!revokedKey || revokedKey.length === 0) throw new InternalError("Invalid key ID");
 
     return {
       message: "Key revoked successfully",
@@ -170,10 +171,7 @@ export class KeyService {
     const signature = await db.query.signatureTable.findFirst({
       where: (signatureTable, { eq }) => eq(signatureTable.documentId, documentId),
     });
-
-    if (!signature) {
-      throw new Error("Signature not found");
-    }
+    if (!signature) throw new NotFoundError("Signature not found");
 
     const key = await db.query.keyTable.findFirst({
       where: (keyTable, { eq }) => eq(keyTable.id, signature.keyId),

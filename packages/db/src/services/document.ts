@@ -11,6 +11,7 @@ import type {
 
 import { db } from "..";
 import { directoryExists } from "../libs/directory";
+import { InternalError, NotFoundError, ValidationError } from "../libs/errors";
 import { lowerSql } from "../libs/parse";
 import { generateId } from "../libs/random";
 import { OfficeSignature } from "../libs/signature/office";
@@ -20,6 +21,10 @@ import { documentTable, signatureTable } from "../tables";
 
 export class DocumentService {
   static async uploadDocument(form: DocumentUploadSchema, userId: string | undefined) {
+    if (!userId) {
+      throw new InternalError("Invalid user ID");
+    }
+
     const rawBuffer = Buffer.from(await form.file.arrayBuffer());
     const extension = path.extname(form.file.name).toLowerCase();
 
@@ -34,7 +39,7 @@ export class DocumentService {
         documentHash = await OfficeSignature.calculateOriginalHash(rawBuffer);
         break;
       default:
-        throw new Error(`Unsupported file extension: ${extension}`);
+        throw new ValidationError(`Unsupported file extension: ${extension}`);
     }
 
     const storagePath = resolve(process.cwd(), "../../storage/documents");
@@ -48,10 +53,6 @@ export class DocumentService {
 
     let matchedTitle: string | undefined;
     let matchedDocumentId: string | undefined;
-
-    if (!userId) {
-      throw new Error("INTERNAL: Invalid user ID");
-    }
 
     if (matchedDir) {
       const parsedMatched = parseSlug(matchedDir);
@@ -77,9 +78,8 @@ export class DocumentService {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-
     if (!uploadDocument) {
-      throw new Error("INTERNAL: Failed to upload document");
+      throw new InternalError("Failed to upload document");
     }
 
     if (matchedDir) {
@@ -226,7 +226,7 @@ export class DocumentService {
       };
     } catch (error) {
       console.error("Error fetching document datalist:", error);
-      throw new Error("Failed to fetch document datalist");
+      throw new InternalError("Failed to fetch document datalist");
     }
   }
 
@@ -234,7 +234,7 @@ export class DocumentService {
     const { id: documentId } = parseSlug(id);
 
     if (!documentId) {
-      throw new Error("INTERNAL: Invalid document ID");
+      throw new InternalError("Invalid document ID");
     }
 
     const documentData = await db.query.documentTable.findFirst({
@@ -246,7 +246,7 @@ export class DocumentService {
     });
 
     if (!documentData) {
-      throw new Error("INTERNAL: Document not found");
+      throw new InternalError("Document not found");
     }
 
     return { ...documentData };
@@ -255,6 +255,10 @@ export class DocumentService {
   static async deleteDocumentById(id: string) {
     const { id: documentId, title } = parseSlug(id);
 
+    if (!documentId) {
+      throw new InternalError("Invalid document ID");
+    }
+
     const documentPath = join("public", "documents");
 
     const documentDir = convertToSlug(`${title}-${documentId}`);
@@ -262,19 +266,13 @@ export class DocumentService {
     const checkDocument = await db.query.documentTable.findFirst({
       where: (documentTable, { eq }) => eq(lowerSql(documentTable.id), documentId),
     });
-
     if (!checkDocument) {
-      throw new Error("NOT_FOUND: Document not found");
-    }
-
-    if (!documentId) {
-      throw new Error("INTERNAL: Invalid document ID");
+      throw new NotFoundError("Document not found");
     }
 
     const deleteData = await db.delete(documentTable).where(eq(documentTable.id, checkDocument.id)).returning();
-
     if (!deleteData) {
-      throw new Error("NOT_FOUND: Document not found");
+      throw new NotFoundError("Document not found");
     }
 
     if (deleteData) {

@@ -1,6 +1,8 @@
 import { promises as fs } from "node:fs";
 import { join, resolve } from "node:path";
 
+import { InternalError } from "./errors";
+
 export async function getDocumentHash(file: File): Promise<string> {
   const arrayBuffer = await file.arrayBuffer();
   const hashBuffer = await crypto.subtle.digest("SHA-256", arrayBuffer);
@@ -33,8 +35,7 @@ export async function getHumanReadableFileSize(dirName: string, fileName: string
     const stats = await fs.stat(targetFile);
     return formatBytes(stats.size);
   } catch (error) {
-    console.error("Error getting file size:", error);
-    return null;
+    throw new InternalError(`Failed to get file size: ${error instanceof Error ? error.message : "Unknown error"}`);
   }
 }
 
@@ -45,14 +46,13 @@ export function separateFilenameWithExt(fileName: string) {
 export async function getDocument(dirPath: string) {
   try {
     const files = await fs.readdir(dirPath);
-    if (files.length === 0) {
-      throw new Error(`No files found in the directory: ${dirPath}`);
-    }
+    if (files.length === 0) throw new InternalError(`No files found in the directory: ${dirPath}`);
 
     const getFirstFileInPath = await fs.readFile(join(dirPath, files[0]!));
     return getFirstFileInPath;
   } catch (error) {
-    throw new Error(`Error reading document from ${dirPath}: ${error}`);
+    if (error instanceof InternalError) throw error;
+    throw new InternalError(`Error reading document from ${dirPath}: ${error}`);
   }
 }
 
@@ -60,9 +60,7 @@ export async function getDocumentByName(dirPath: string, nameIncludes: string) {
   const files = await fs.readdir(dirPath);
   const matchedFiles = files.find((file) => file.includes(nameIncludes));
 
-  if (!matchedFiles) {
-    throw new Error(`No file found in ${dirPath} that includes "${nameIncludes}"`);
-  }
+  if (!matchedFiles) throw new InternalError(`No file found in ${dirPath} that includes "${nameIncludes}"`);
 
   const getFile = await fs.readFile(join(dirPath, matchedFiles));
   return { name: matchedFiles, content: getFile };
