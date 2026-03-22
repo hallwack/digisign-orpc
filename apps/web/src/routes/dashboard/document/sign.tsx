@@ -10,7 +10,7 @@ export const Route = createFileRoute("/dashboard/document/sign")({
     breadcrumb: { label: "Sign Document" },
   },
   loader: async ({ context: { queryClient } }) => {
-    const documents = await queryClient.fetchQuery(orpc.document.getAll.queryOptions());
+    const documents = await queryClient.fetchQuery(orpc.document.all.queryOptions());
     return { documents };
   },
 });
