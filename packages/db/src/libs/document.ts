@@ -1,5 +1,5 @@
 import { promises as fs } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 
 export async function getDocumentHash(file: File): Promise<string> {
   const arrayBuffer = await file.arrayBuffer();
@@ -25,10 +25,12 @@ function formatBytes(bytes: number, decimals = 2): string {
 }
 
 export async function getHumanReadableFileSize(dirName: string, fileName: string) {
-  const filePath = join(process.cwd(), "public", "documents", dirName, fileName);
+  const storagePath = resolve(process.cwd(), "../../storage/documents");
+  const targetDir = join(storagePath, dirName);
+  const targetFile = join(targetDir, fileName);
 
   try {
-    const stats = await fs.stat(filePath);
+    const stats = await fs.stat(targetFile);
     return formatBytes(stats.size);
   } catch (error) {
     console.error("Error getting file size:", error);
