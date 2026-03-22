@@ -1,10 +1,11 @@
 import { ORPCError, os } from "@orpc/server";
 
 import type { Context } from "./context";
+import { errorHandlerMiddleware } from "./middlewares/error";
 
 export const base = os.$context<Context>();
 
-export const publicProcedure = base;
+export const publicProcedure = base.use(errorHandlerMiddleware);
 
 const requireAuth = base.middleware(async ({ context, next }) => {
   const isAuthed = !!context.session?.user;
@@ -18,4 +19,4 @@ const requireAuth = base.middleware(async ({ context, next }) => {
   });
 });
 
-export const protectedProcedure = publicProcedure.use(requireAuth);
+export const protectedProcedure = publicProcedure.use(errorHandlerMiddleware).use(requireAuth);
