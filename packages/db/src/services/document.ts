@@ -11,7 +11,6 @@ import type {
 
 import { db } from "..";
 import { directoryExists } from "../libs/directory";
-import { getHumanReadableFileSize } from "../libs/document";
 import { lowerSql } from "../libs/parse";
 import { generateId } from "../libs/random";
 import { OfficeSignature } from "../libs/signature/office";
@@ -234,21 +233,23 @@ export class DocumentService {
   static async getDocumentById(id: string) {
     const { id: documentId } = parseSlug(id);
 
+    if (!documentId) {
+      throw new Error("INTERNAL: Invalid document ID");
+    }
+
     const documentData = await db.query.documentTable.findFirst({
       with: {
         user: true,
         signature: true,
       },
-      where: (documentTable, { eq }) => eq(lowerSql(documentTable.id), documentId),
+      where: (documentTable, { eq }) => eq(documentTable.id, documentId),
     });
 
     if (!documentData) {
       throw new Error("INTERNAL: Document not found");
     }
 
-    const fileSize = await getHumanReadableFileSize(id, documentData.fileName);
-
-    return { ...documentData, fileSize };
+    return { ...documentData };
   }
 
   static async deleteDocumentById(id: string) {
