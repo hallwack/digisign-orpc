@@ -22,6 +22,7 @@ import { Route as DashboardKeyCreateRouteImport } from './routes/dashboard/key/c
 import { Route as DashboardDocumentVerifyRouteImport } from './routes/dashboard/document/verify'
 import { Route as DashboardDocumentUploadRouteImport } from './routes/dashboard/document/upload'
 import { Route as DashboardDocumentSignRouteImport } from './routes/dashboard/document/sign'
+import { Route as DashboardDocumentDocIdRouteImport } from './routes/dashboard/document/$docId'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/_auth',
@@ -86,6 +87,11 @@ const DashboardDocumentSignRoute = DashboardDocumentSignRouteImport.update({
   path: '/document/sign',
   getParentRoute: () => DashboardRouteRoute,
 } as any)
+const DashboardDocumentDocIdRoute = DashboardDocumentDocIdRouteImport.update({
+  id: '/document/$docId',
+  path: '/document/$docId',
+  getParentRoute: () => DashboardRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRouteRouteWithChildren
@@ -93,6 +99,7 @@ export interface FileRoutesByFullPath {
   '/verify': typeof appVerifyRoute
   '/login': typeof AuthLoginRoute
   '/register': typeof AuthRegisterRoute
+  '/dashboard/document/$docId': typeof DashboardDocumentDocIdRoute
   '/dashboard/document/sign': typeof DashboardDocumentSignRoute
   '/dashboard/document/upload': typeof DashboardDocumentUploadRoute
   '/dashboard/document/verify': typeof DashboardDocumentVerifyRoute
@@ -106,6 +113,7 @@ export interface FileRoutesByTo {
   '/verify': typeof appVerifyRoute
   '/login': typeof AuthLoginRoute
   '/register': typeof AuthRegisterRoute
+  '/dashboard/document/$docId': typeof DashboardDocumentDocIdRoute
   '/dashboard/document/sign': typeof DashboardDocumentSignRoute
   '/dashboard/document/upload': typeof DashboardDocumentUploadRoute
   '/dashboard/document/verify': typeof DashboardDocumentVerifyRoute
@@ -122,6 +130,7 @@ export interface FileRoutesById {
   '/_auth/login': typeof AuthLoginRoute
   '/_auth/register': typeof AuthRegisterRoute
   '/(app)/': typeof appIndexRoute
+  '/dashboard/document/$docId': typeof DashboardDocumentDocIdRoute
   '/dashboard/document/sign': typeof DashboardDocumentSignRoute
   '/dashboard/document/upload': typeof DashboardDocumentUploadRoute
   '/dashboard/document/verify': typeof DashboardDocumentVerifyRoute
@@ -137,6 +146,7 @@ export interface FileRouteTypes {
     | '/verify'
     | '/login'
     | '/register'
+    | '/dashboard/document/$docId'
     | '/dashboard/document/sign'
     | '/dashboard/document/upload'
     | '/dashboard/document/verify'
@@ -150,6 +160,7 @@ export interface FileRouteTypes {
     | '/verify'
     | '/login'
     | '/register'
+    | '/dashboard/document/$docId'
     | '/dashboard/document/sign'
     | '/dashboard/document/upload'
     | '/dashboard/document/verify'
@@ -165,6 +176,7 @@ export interface FileRouteTypes {
     | '/_auth/login'
     | '/_auth/register'
     | '/(app)/'
+    | '/dashboard/document/$docId'
     | '/dashboard/document/sign'
     | '/dashboard/document/upload'
     | '/dashboard/document/verify'
@@ -272,6 +284,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardDocumentSignRouteImport
       parentRoute: typeof DashboardRouteRoute
     }
+    '/dashboard/document/$docId': {
+      id: '/dashboard/document/$docId'
+      path: '/document/$docId'
+      fullPath: '/dashboard/document/$docId'
+      preLoaderRoute: typeof DashboardDocumentDocIdRouteImport
+      parentRoute: typeof DashboardRouteRoute
+    }
   }
 }
 
@@ -290,6 +309,7 @@ const appRouteRouteWithChildren = appRouteRoute._addFileChildren(
 )
 
 interface DashboardRouteRouteChildren {
+  DashboardDocumentDocIdRoute: typeof DashboardDocumentDocIdRoute
   DashboardDocumentSignRoute: typeof DashboardDocumentSignRoute
   DashboardDocumentUploadRoute: typeof DashboardDocumentUploadRoute
   DashboardDocumentVerifyRoute: typeof DashboardDocumentVerifyRoute
@@ -299,6 +319,7 @@ interface DashboardRouteRouteChildren {
 }
 
 const DashboardRouteRouteChildren: DashboardRouteRouteChildren = {
+  DashboardDocumentDocIdRoute: DashboardDocumentDocIdRoute,
   DashboardDocumentSignRoute: DashboardDocumentSignRoute,
   DashboardDocumentUploadRoute: DashboardDocumentUploadRoute,
   DashboardDocumentVerifyRoute: DashboardDocumentVerifyRoute,

@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { type ColumnDef } from "@tanstack/react-table";
 import { EyeIcon, KeyIcon, MoreHorizontalIcon, TrashIcon } from "lucide-react";
 import { useMemo } from "react";
@@ -87,10 +88,21 @@ export function useDocumentColumns({
               />
               <DropdownMenuContent align="end">
                 <DropdownMenuGroup>
-                  <DropdownMenuItem className="cursor-pointer" onClick={() => onViewDocument?.(row.original.id)}>
-                    <EyeIcon className="mr-2 h-4 w-4" />
-                    View Document
-                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="cursor-pointer"
+                    onClick={() => onViewDocument?.(row.original.id)}
+                    render={
+                      <Link
+                        to="/dashboard/document/$docId"
+                        params={{
+                          docId: row.original.id,
+                        }}
+                      >
+                        <EyeIcon className="mr-2 h-4 w-4" />
+                        View Document
+                      </Link>
+                    }
+                  />
                   {row.original.signedAt && (
                     <DropdownMenuItem className="cursor-pointer" onClick={() => onResignDocument?.(row.original.id)}>
                       <KeyIcon className="mr-2 h-4 w-4" />
