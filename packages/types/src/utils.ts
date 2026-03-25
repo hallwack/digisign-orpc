@@ -55,7 +55,6 @@ export const documentFileSchema = z.instanceof(File, { message: "Document is req
 
 export const idSchema = z
   .string()
-  .length(32)
   .regex(/^[a-zA-Z0-9]+$/, "Invalid ID Format");
 
 export const createPaginationSchema = <T extends z.ZodEnum<any>>(sortEnum: T) =>
