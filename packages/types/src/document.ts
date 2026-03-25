@@ -1,5 +1,7 @@
 import z from "zod";
 
+import { signatureSchema } from "./signature";
+import { userSchema } from "./user";
 import { createPaginationSchema, dateQuerySchema, documentFileSchema, documentKeySchema, idSchema } from "./utils";
 
 export const documentSchema = z.object({
@@ -85,6 +87,11 @@ export const documentShowResponseSchema = documentSchema.extend({
   fileSize: z.string().optional(),
 });
 
+export const documentDetailResponseSchema = documentSchema.extend({
+  user: userSchema,
+  signature: signatureSchema,
+});
+
 export const documentSignResponseSchema = z.object({
   fileData: z.string(),
   fileName: z.string(),
@@ -104,6 +111,7 @@ export const getAllDocumentResponseSchema = z.array(
 export type DocumentTableItemSchema = z.infer<typeof documentTableItemSchema>;
 export type DocumentDataTableRequestSchema = z.infer<typeof documentDataTableRequestSchema>;
 export type DocumentDataTableResponseSchema = z.infer<typeof documentDataTableResponseSchema>;
+export type DocumentDetailResponseSchema = z.infer<typeof documentDetailResponseSchema>;
 export type DocumentSignResponseSchema = z.infer<typeof documentSignResponseSchema>;
 export type DocumentSignSchema = z.infer<typeof documentSignSchema>;
 export type DocumentSignFormSchema = z.infer<typeof documentSignFormSchema>;
