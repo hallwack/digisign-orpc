@@ -240,13 +240,15 @@ export class DocumentService {
     const documentData = await db.query.documentTable.findFirst({
       with: {
         user: true,
-        signature: true,
+        signature: {
+          with: { key: true },
+        },
       },
       where: (documentTable, { eq }) => eq(documentTable.id, documentId),
     });
 
     if (!documentData) {
-      throw new InternalError("Document not found");
+      throw new NotFoundError("Document not found");
     }
 
     return { ...documentData };
