@@ -98,6 +98,30 @@ export const documentRouter = {
     .handler(async ({ input, context }) => {
       return SignatureService.resignDocument(input, context.session.user.id);
     }),
+  downloadOriginal: protectedProcedure
+    .route({
+      path: "/document/{id}/download/original",
+      method: "GET",
+      tags: ["Document"],
+      summary: "Download Original Document",
+      description: "Download the original document file by ID",
+    })
+    .input(documentIdSchema)
+    .handler(async ({ input }) => {
+      return DocumentService.downloadOriginalDocument(input.id);
+    }),
+  downloadSigned: protectedProcedure
+    .route({
+      path: "/document/{id}/download/signed",
+      method: "GET",
+      tags: ["Document"],
+      summary: "Download Signed Document",
+      description: "Download the signed document file by ID",
+    })
+    .input(documentIdSchema)
+    .handler(async ({ input }) => {
+      return DocumentService.downloadSignedDocument(input.id);
+    }),
   delete: protectedProcedure
     .route({
       path: "/document",
