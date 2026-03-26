@@ -6,11 +6,11 @@ import type { DocumentFileUploadSchema, DocumentSignSchema } from "@digisign/typ
 
 import { db } from "..";
 import { getDocumentByName } from "../libs/document";
+import { InternalError, NotFoundError, ValidationError } from "../libs/errors";
 import { generateId } from "../libs/random";
 import { appendSignature, verifyDocumentSignature, verifyHybridSignature } from "../libs/signature";
 import { convertToSlug } from "../libs/slug";
 import { documentTable, keyTable, signatureTable, userTable } from "../tables";
-import { InternalError, NotFoundError, ValidationError } from "../libs/errors";
 
 export class SignatureService {
   static async signDocument(form: DocumentSignSchema) {
@@ -228,9 +228,8 @@ export class SignatureService {
       })
       .where(eq(signatureTable.documentId, document.id))
       .returning();
-    if (!updatedSignature || updatedSignature.length === 0) {
+    if (!updatedSignature || updatedSignature.length === 0)
       throw new InternalError("Failed to update signature in database");
-    }
 
     return {
       fileData: Buffer.from(documentContent).toString("base64"),
