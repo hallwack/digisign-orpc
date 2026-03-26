@@ -2,6 +2,7 @@ import { promises as fs } from "node:fs";
 import { join, resolve } from "node:path";
 
 import { InternalError } from "./errors";
+import { convertToSlug } from "./slug";
 
 export async function getDocumentHash(file: File): Promise<string> {
   const arrayBuffer = await file.arrayBuffer();
@@ -26,10 +27,10 @@ function formatBytes(bytes: number, decimals = 2): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
 }
 
-export async function getHumanReadableFileSize(dirName: string, fileName: string) {
+export async function getHumanReadableFileSize(title: string, dirName: string, fileName: string) {
   const storagePath = resolve(process.cwd(), "../../storage/documents");
-  const targetDir = join(storagePath, dirName);
-  const targetFile = join(targetDir, fileName);
+  const dirNameSlug = `${convertToSlug(title)}-${dirName}`.toLowerCase();
+  const targetFile = join(storagePath, dirNameSlug, fileName);
 
   try {
     const stats = await fs.stat(targetFile);
