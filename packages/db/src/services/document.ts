@@ -1,5 +1,6 @@
 import { SQL, and, asc, count, desc, eq, gte, ilike, lte } from "drizzle-orm";
 import { mkdirSync, rmSync } from "node:fs";
+import { promises as fs } from "node:fs";
 import path from "node:path";
 import { join, resolve } from "node:path";
 
@@ -11,6 +12,7 @@ import type {
 
 import { db } from "..";
 import { directoryExists } from "../libs/directory";
+import { getDocumentByName, getHumanReadableFileSize } from "../libs/document";
 import { InternalError, NotFoundError, ValidationError } from "../libs/errors";
 import { lowerSql } from "../libs/parse";
 import { generateId } from "../libs/random";
@@ -232,10 +234,7 @@ export class DocumentService {
 
   static async getDocumentById(id: string) {
     const { id: documentId } = parseSlug(id);
-
-    if (!documentId) {
-      throw new InternalError("Invalid document ID");
-    }
+    if (!documentId) throw new InternalError("Invalid document ID");
 
     const documentData = await db.query.documentTable.findFirst({
       with: {
@@ -246,36 +245,27 @@ export class DocumentService {
       },
       where: (documentTable, { eq }) => eq(documentTable.id, documentId),
     });
+    if (!documentData) throw new NotFoundError("Document not found");
 
-    if (!documentData) {
-      throw new NotFoundError("Document not found");
-    }
+    const fileSize = await getHumanReadableFileSize(documentData.title, documentData.id, documentData.fileName);
 
-    return { ...documentData };
+    return { ...documentData, fileSize };
   }
 
   static async deleteDocumentById(id: string) {
     const { id: documentId, title } = parseSlug(id);
-
-    if (!documentId) {
-      throw new InternalError("Invalid document ID");
-    }
+    if (!documentId) throw new InternalError("Invalid document ID");
 
     const documentPath = join("public", "documents");
-
     const documentDir = convertToSlug(`${title}-${documentId}`);
 
     const checkDocument = await db.query.documentTable.findFirst({
       where: (documentTable, { eq }) => eq(lowerSql(documentTable.id), documentId),
     });
-    if (!checkDocument) {
-      throw new NotFoundError("Document not found");
-    }
+    if (!checkDocument) throw new NotFoundError("Document not found");
 
     const deleteData = await db.delete(documentTable).where(eq(documentTable.id, checkDocument.id)).returning();
-    if (!deleteData) {
-      throw new NotFoundError("Document not found");
-    }
+    if (!deleteData) throw new NotFoundError("Document not found");
 
     if (deleteData) {
       rmSync(join(documentPath, documentDir), {
@@ -298,5 +288,47 @@ export class DocumentService {
     });
 
     return documents;
+  }
+
+  static async downloadOriginalDocument(id: string) {
+    const { id: documentId } = parseSlug(id);
+    if (!documentId) throw new InternalError("Invalid document ID");
+
+    const documentData = await db.query.documentTable.findFirst({
+      where: (documentTable, { eq }) => eq(documentTable.id, documentId),
+    });
+    if (!documentData) throw new NotFoundError("Document not found");
+
+    const dirName = convertToSlug(`${documentData.title}-${documentData.id}`);
+    const dirPath = resolve(process.cwd(), "../../storage/documents", dirName);
+    const filePath = join(dirPath, documentData.fileName);
+
+    const fileBuffer = await fs.readFile(filePath);
+
+    return {
+      fileName: documentData.fileName,
+      mimeType: "application/octet-stream",
+      fileBuffer: Buffer.from(fileBuffer).toString("base64"),
+    };
+  }
+
+  static async downloadSignedDocument(id: string) {
+    const { id: documentId } = parseSlug(id);
+    if (!documentId) throw new InternalError("Invalid document ID");
+
+    const signatureData = await db.query.signatureTable.findFirst({
+      with: { document: true },
+      where: (signatureTable, { eq }) => eq(signatureTable.documentId, documentId),
+    });
+    if (!signatureData || !signatureData.document) throw new NotFoundError("Signed document not found");
+
+    const documentData = signatureData.document;
+
+    const dirName = convertToSlug(`${documentData.title}-${documentData.id}`);
+    const dirPath = resolve(process.cwd(), "../../storage/documents", dirName);
+
+    const { name: fileName, content: fileContent } = await getDocumentByName(dirPath, "signed");
+
+    return { fileName, mimeType: "application/octet-stream", fileBuffer: Buffer.from(fileContent).toString("base64") };
   }
 }
