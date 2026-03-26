@@ -20,7 +20,6 @@ export const signatureMetadataSchema = z.object({
   documentHash: z.string(),
   documentId: idSchema,
   keyId: idSchema,
-  key: keySchema,
   rsaSignature: z.string(),
   eddsaSignature: z.string(),
   createdAt: z.iso.datetime(),

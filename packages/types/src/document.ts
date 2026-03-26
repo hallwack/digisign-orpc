@@ -88,6 +88,7 @@ export const documentShowResponseSchema = documentSchema.extend({
 });
 
 export const documentDetailResponseSchema = documentSchema.extend({
+  fileSize: z.string().optional(),
   user: userSchema,
   signature: signatureSchema,
 });
