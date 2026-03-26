@@ -46,7 +46,7 @@ export default function CopyButton({ text, className, render, children, ...props
       <Tooltip>
         <TooltipTrigger render={triggerElement} />
 
-        <TooltipContent>{copied ? "Copied!" : "Copy to clipboard"}</TooltipContent>
+        <TooltipContent>{copied ? "Tersalin!" : "Salin ke Clipboard"}</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );
