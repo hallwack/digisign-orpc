@@ -136,7 +136,6 @@ export class KeyService {
 
     const sanitizedKeyName = existingKey!.keyName.replace(/\s+/g, "-");
     const fileName = `${sanitizedKeyName}-private-keys.pem`;
-
     const combinedPrivateKey = combinedKeys(id, privateKeyRsa, privateKeyEddsa);
 
     return {
@@ -176,10 +175,10 @@ export class KeyService {
     const key = await db.query.keyTable.findFirst({
       where: (keyTable, { eq }) => eq(keyTable.id, signature.keyId),
     });
+    if (!key) throw new NotFoundError("Key not found");
 
-    const validRsa = verifyRsa(documentHash, rsaSignature, key!.publicKeyRsa);
-
-    const validEddsa = verifyEddsa(documentHash, eddsaSignature, key!.publicKeyEddsa);
+    const validRsa = verifyRsa(documentHash, rsaSignature, key.publicKeyRsa);
+    const validEddsa = verifyEddsa(documentHash, eddsaSignature, key.publicKeyEddsa);
 
     return {
       validRsa,
