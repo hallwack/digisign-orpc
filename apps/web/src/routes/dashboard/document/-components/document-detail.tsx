@@ -10,17 +10,19 @@ import {
   TrashIcon,
   XIcon,
 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 import type { DocumentDetailResponseSchema } from "@digisign/types";
 
 import CopyButton from "@/components/copy-button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { formatDate, formatDateSpecific } from "@/lib/format";
-import { cn } from "@/lib/utils";
+import { base64ToBlob, cn, downloadBlob } from "@/lib/utils";
+import { client } from "@/utils/orpc";
 
 const fileExtensionColors: Record<string, string> = {
   pdf: "bg-red-100 text-red-800 border-red-300",
@@ -39,7 +41,31 @@ export default function DocumentDetail({ detail }: { detail: DocumentDetailRespo
   const fileMimeType = mimeType[extension] || "application/octet-stream";
   const colorClasses = fileExtensionColors[extension.toLowerCase()] || "bg-primary/10 text-primary border-primary/20";
 
-  console.log("document detail", detail);
+  const [api] = useState(() => client);
+
+  const [downloadType, setDownloadType] = useState<"original" | "signed" | null>(null);
+
+  const handleDownloadDocument = async (type: "original" | "signed") => {
+    try {
+      setDownloadType(type);
+
+      const response =
+        type === "original"
+          ? await api.document.downloadOriginal({ id: detail.id })
+          : await api.document.downloadSigned({ id: detail.id });
+
+      if (response) {
+        const blob = base64ToBlob(response.fileBuffer, response.mimeType);
+        downloadBlob(blob, response.fileName);
+        toast.success("Download started.");
+      }
+    } catch (error) {
+      console.error("Download failed:", error);
+      toast.error("Download failed. Please try again.");
+    } finally {
+      setDownloadType(null);
+    }
+  };
 
   return (
     <div className="@container/detail-layout">
@@ -54,9 +80,9 @@ export default function DocumentDetail({ detail }: { detail: DocumentDetailRespo
                   <div className="flex items-center gap-6">
                     <ShieldXIcon className="h-10 w-10" />
                     <div className="space-y-1">
-                      <AlertTitle className="font-semibold">Belum Ditandatangani</AlertTitle>
+                      <AlertTitle className="text-base font-semibold">Belum Ditandatangan</AlertTitle>
                       <AlertDescription className="text-xs">
-                        Segera Tandatangani dokumen ini untuk memastikan keaslian dan integritasnya. Klik tombol
+                        Mohon segera tandatangani dokumen ini untuk memastikan keaslian dan integritasnya. Klik tombol
                         "Tandatangani Sekarang" di bawah untuk memulai proses penandatanganan digital.
                       </AlertDescription>
                     </div>
@@ -69,9 +95,9 @@ export default function DocumentDetail({ detail }: { detail: DocumentDetailRespo
                   <div className="flex items-center gap-6">
                     <ShieldCheckIcon className="h-10 w-10" />
                     <div className="space-y-1">
-                      <AlertTitle className="font-semibold">Sudah Ditandatangani</AlertTitle>
+                      <AlertTitle className="text-base font-semibold">Sudah Ditandatangani</AlertTitle>
                       <AlertDescription className="text-xs">
-                        Tanda tangan RSA + EdDSA valid · {formatDateSpecific(detail.signature.signedAt ?? "")}
+                        Tandatangan RSA dan EdDSA Valid · {formatDateSpecific(detail.signature.signedAt ?? "")}
                       </AlertDescription>
                     </div>
                   </div>
@@ -84,7 +110,7 @@ export default function DocumentDetail({ detail }: { detail: DocumentDetailRespo
                     render={
                       <Link to="/dashboard/document/verify">
                         <CheckCircle2Icon />
-                        Verifikasi Ulang
+                        Verifikasi Sekarang
                       </Link>
                     }
                   />
@@ -102,7 +128,7 @@ export default function DocumentDetail({ detail }: { detail: DocumentDetailRespo
             <CardContent className="@container/doc-info space-y-6">
               <div className="grid grid-cols-1 gap-4 @[640px]/doc-info:grid-cols-2">
                 <div className="flex flex-col gap-1">
-                  <span className="text-muted-foreground">Document ID</span>
+                  <span className="text-muted-foreground">ID Dokumen</span>
                   <div className="flex flex-col items-start justify-between gap-2 @[300px]/doc-info:flex-row @[300px]/doc-info:items-center">
                     <code className="text-foreground font-mono text-sm">{detail.id}</code>
                     <CopyButton text={detail.id} />
@@ -110,7 +136,7 @@ export default function DocumentDetail({ detail }: { detail: DocumentDetailRespo
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  <span className="text-muted-foreground">User ID</span>
+                  <span className="text-muted-foreground">ID User</span>
                   <div className="flex flex-col items-start justify-between gap-2 @[300px]/doc-info:flex-row @[300px]/doc-info:items-center">
                     <code className="text-foreground font-mono text-sm">{detail.userId}</code>
                     <CopyButton text={detail.userId} />
@@ -118,17 +144,17 @@ export default function DocumentDetail({ detail }: { detail: DocumentDetailRespo
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  <span className="text-muted-foreground">File Name</span>
+                  <span className="text-muted-foreground">Nama File</span>
                   <span className="text-foreground text-sm">{detail.fileName}</span>
                 </div>
 
                 <div className="flex flex-col gap-1">
                   <span className="text-muted-foreground">Ukuran File</span>
-                  <span className="text-foreground text-sm">2,4 MB (2.457.600 bytes)</span>
+                  <span className="text-foreground text-sm">{detail.fileSize}</span>
                 </div>
 
                 <div className="flex flex-col gap-1">
-                  <span className="text-muted-foreground">Diunggah pada</span>
+                  <span className="text-muted-foreground">Dibuat Pada</span>
                   <span className="text-foreground text-sm">{formatDateSpecific(detail.createdAt ?? "")}</span>
                 </div>
 
@@ -186,44 +212,38 @@ export default function DocumentDetail({ detail }: { detail: DocumentDetailRespo
           {/* Riwayat Tanda Tangan */}
           <Card>
             <CardHeader>
-              <CardTitle>Riwayat Tanda Tangan</CardTitle>
+              <CardTitle>Detail Tanda Tangan</CardTitle>
             </CardHeader>
             <Separator />
             <CardContent className="@container/sig-entry space-y-6">
               {detail.signature !== null ? (
                 <>
-                  <div className="flex flex-col items-start justify-between gap-3 @[400px]/sig-entry:flex-row @[400px]/sig-entry:items-center">
-                    <div className="space-y-1">
-                      <p className="text-card-foreground text-sm font-semibold">
-                        {detail.user.name} <span className="text-muted-foreground font-normal">(Anda)</span>
-                      </p>
-                      <p className="text-muted-foreground text-xs">15 Januari 2026, 14:32:19 WIB</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Badge>RSA Valid</Badge>
-                      <Badge>EdDSA Valid</Badge>
-                    </div>
-                  </div>
-
                   <div className="bg-muted border-border @container/sig-fields overflow-hidden rounded-lg border">
                     <div className="divide-border grid grid-cols-1 divide-y">
                       <div className="divide-border grid grid-cols-1 divide-y @[420px]/sig-fields:grid-cols-[140px_1fr] @[420px]/sig-fields:divide-x @[420px]/sig-fields:divide-y-0">
                         <div className="flex items-center p-3">
-                          <p className="text-muted-foreground">Signature ID</p>
+                          <p className="text-muted-foreground">Nama</p>
+                        </div>
+                        <div className="text-foreground p-3 font-mono">{detail.user.name}</div>
+                      </div>
+
+                      <div className="divide-border grid grid-cols-1 divide-y @[420px]/sig-fields:grid-cols-[140px_1fr] @[420px]/sig-fields:divide-x @[420px]/sig-fields:divide-y-0">
+                        <div className="flex items-center p-3">
+                          <p className="text-muted-foreground">ID Tanda Tangan</p>
                         </div>
                         <div className="text-foreground p-3 font-mono">{detail.signature.id}</div>
                       </div>
 
                       <div className="divide-border grid grid-cols-1 divide-y @[420px]/sig-fields:grid-cols-[140px_1fr] @[420px]/sig-fields:divide-x @[420px]/sig-fields:divide-y-0">
                         <div className="flex items-center p-3">
-                          <p className="text-muted-foreground">Key ID</p>
+                          <p className="text-muted-foreground">ID Kunci</p>
                         </div>
                         <div className="text-foreground p-3 font-mono">{detail.signature.keyId}</div>
                       </div>
 
                       <div className="divide-border grid grid-cols-1 divide-y @[420px]/sig-fields:grid-cols-[140px_1fr] @[420px]/sig-fields:divide-x @[420px]/sig-fields:divide-y-0">
                         <div className="flex items-center p-3">
-                          <p className="text-muted-foreground">RSA Signature</p>
+                          <p className="text-muted-foreground">Signature RSA</p>
                         </div>
                         <div className="flex items-start justify-between gap-2 p-3">
                           <code
@@ -232,15 +252,12 @@ export default function DocumentDetail({ detail }: { detail: DocumentDetailRespo
                           >
                             {detail.signature.rsaSignature}
                           </code>
-                          <button className="text-primary hover:text-primary/70 text-xs transition-colors">
-                            Lihat
-                          </button>
                         </div>
                       </div>
 
                       <div className="divide-border grid grid-cols-1 divide-y @[420px]/sig-fields:grid-cols-[140px_1fr] @[420px]/sig-fields:divide-x @[420px]/sig-fields:divide-y-0">
                         <div className="flex items-center p-3">
-                          <p className="text-muted-foreground">EdDSA Signature</p>
+                          <p className="text-muted-foreground">Signature EdDSA</p>
                         </div>
                         <div className="flex items-start justify-between gap-2 p-3">
                           <code
@@ -249,18 +266,15 @@ export default function DocumentDetail({ detail }: { detail: DocumentDetailRespo
                           >
                             {detail.signature.eddsaSignature}
                           </code>
-                          <button className="text-primary hover:text-primary/70 text-xs transition-colors">
-                            Lihat
-                          </button>
                         </div>
                       </div>
 
                       <div className="divide-border grid grid-cols-1 divide-y @[420px]/sig-fields:grid-cols-[140px_1fr] @[420px]/sig-fields:divide-x @[420px]/sig-fields:divide-y-0">
                         <div className="flex items-center p-3">
-                          <p className="text-muted-foreground">Signed At</p>
+                          <p className="text-muted-foreground">Ditandatangani Pada</p>
                         </div>
                         <div className="text-foreground p-3 font-mono">
-                          {formatDate(detail.signature.signedAt ?? "")}
+                          {formatDateSpecific(detail.signature.signedAt ?? "")}
                         </div>
                       </div>
                     </div>
@@ -271,11 +285,14 @@ export default function DocumentDetail({ detail }: { detail: DocumentDetailRespo
                   <div className="bg-muted border-border mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full border">
                     <PencilIcon />
                   </div>
-                  <p className="text-foreground mb-1 text-sm font-medium">Belum ditandatangani</p>
+                  <p className="text-foreground mb-1 text-sm font-medium">Belum Ditandatangani</p>
                   <p className="text-muted-foreground mb-4 text-xs">Dokumen ini belum memiliki tanda tangan digital.</p>
-                  <button className="bg-primary text-primary-foreground inline-flex h-9 items-center gap-2 rounded-md px-4 text-sm font-medium transition-opacity hover:opacity-90">
+                  <Link
+                    to="/dashboard/document/sign"
+                    className="bg-primary text-primary-foreground inline-flex h-9 items-center gap-2 rounded-md px-4 text-sm font-medium transition-opacity hover:opacity-90"
+                  >
                     Tandatangani Sekarang
-                  </button>
+                  </Link>
                 </div>
               )}
             </CardContent>
@@ -296,9 +313,9 @@ export default function DocumentDetail({ detail }: { detail: DocumentDetailRespo
                   <div className="bg-primary/10 border-primary/20 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border">
                     <KeyIcon size={16} className="stroke-primary" />
                   </div>
-                  <div className="min-w-0">
+                  <div>
                     <p className="text-card-foreground text-sm font-semibold">{detail.signature.key.keyName}</p>
-                    <code className="text-muted-foreground block max-w-50 overflow-hidden font-mono text-xs text-ellipsis whitespace-nowrap">
+                    <code className="text-muted-foreground block font-mono text-xs text-wrap">
                       {detail.signature.key.id}
                     </code>
                   </div>
@@ -306,7 +323,7 @@ export default function DocumentDetail({ detail }: { detail: DocumentDetailRespo
 
                 <div className="flex flex-col gap-2">
                   <div className="bg-muted flex items-center justify-between rounded-md px-3 py-2">
-                    <span className="text-muted-foreground text-xs">RSA Public Key</span>
+                    <span className="text-muted-foreground text-xs">Public Key RSA</span>
                     {detail.signature.key.publicKeyRsa ? (
                       <span className="inline-flex items-center gap-1 text-xs font-medium text-green-600">
                         <CheckIcon size={10} />
@@ -320,7 +337,7 @@ export default function DocumentDetail({ detail }: { detail: DocumentDetailRespo
                     )}
                   </div>
                   <div className="bg-muted flex items-center justify-between rounded-md px-3 py-2">
-                    <span className="text-muted-foreground text-xs">EdDSA Public Key</span>
+                    <span className="text-muted-foreground text-xs">Public Key EdDSA</span>
                     {detail.signature.key.publicKeyEddsa ? (
                       <span className="inline-flex items-center gap-1 text-xs font-medium text-green-600">
                         <CheckIcon size={10} />
@@ -334,49 +351,58 @@ export default function DocumentDetail({ detail }: { detail: DocumentDetailRespo
                     )}
                   </div>
                   <div className="bg-muted flex items-center justify-between rounded-md px-3 py-2">
-                    <span className="text-muted-foreground text-xs">Dibuat pada</span>
+                    <span className="text-muted-foreground text-xs">Dibuat Pada</span>
                     <span className="text-foreground text-xs">{formatDate(detail.signature.key.createdAt ?? "")}</span>
                   </div>
                 </div>
               </CardContent>
             </Card>
           )}
+
           {/* Action */}
           <Card className="w-full">
             <CardHeader>
-              <CardTitle>Action</CardTitle>
+              <CardTitle>Aksi</CardTitle>
             </CardHeader>
             <Separator />
             <CardContent className="space-y-1">
               <Button
                 variant="ghost"
                 className="hover:bg-primary/10! h-auto w-full justify-start gap-3 px-3 py-2.5 text-sm font-medium"
-              >
-                <div className="bg-primary/10 flex h-8 w-8 shrink-0 items-center justify-center rounded-md">
-                  <PencilIcon className="text-primary h-4 w-4" />
-                </div>
-                Tandatangani Dokumen
-              </Button>
+                nativeButton={false}
+                render={
+                  <Link to="/dashboard/document/sign">
+                    <div className="bg-primary/10 flex h-8 w-8 shrink-0 items-center justify-center rounded-md">
+                      <PencilIcon className="text-primary h-4 w-4" />
+                    </div>
+                    Tandatangan Dokumen
+                  </Link>
+                }
+              />
 
               <Button
                 variant="ghost"
-                className="hover:bg-accent h-auto w-full justify-start gap-3 px-3 py-2.5 text-sm font-medium"
+                className="hover:bg-accent h-auto w-full cursor-pointer justify-start gap-3 px-3 py-2.5 text-left text-sm font-medium whitespace-normal"
+                onClick={() => handleDownloadDocument("original")}
+                disabled={downloadType === "original"}
               >
                 <div className="bg-muted-foreground/10 flex h-8 w-8 shrink-0 items-center justify-center rounded-md">
                   <DownloadIcon className="stroke-muted-foreground h-4 w-4" />
                 </div>
-                Unduh Dokumen Asli
+                {downloadType === "original" ? "Mengunduh..." : "Unduh Dokumen Asli"}
               </Button>
 
               {detail.signature !== null && (
                 <Button
                   variant="ghost"
-                  className="hover:bg-accent h-auto w-full justify-start gap-3 px-3 py-2.5 text-left text-sm font-medium whitespace-normal"
+                  className="hover:bg-accent h-auto w-full cursor-pointer justify-start gap-3 px-3 py-2.5 text-left text-sm font-medium whitespace-normal"
+                  onClick={() => handleDownloadDocument("signed")}
+                  disabled={downloadType === "signed"}
                 >
                   <div className="bg-muted-foreground/10 flex h-8 w-8 shrink-0 items-center justify-center rounded-md">
                     <DownloadIcon className="stroke-muted-foreground h-4 w-4" />
                   </div>
-                  Unduh Dokumen Bertanda Tangan
+                  {downloadType === "signed" ? "Mengunduh..." : "Unduh Dokumen yang Ditandatangani"}
                 </Button>
               )}
 
