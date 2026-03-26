@@ -6,7 +6,7 @@ export const Route = createFileRoute("/dashboard/document/$docId")({
   component: DashboardDocumentDetailPageComponent,
   staticData: {
     breadcrumb: {
-      label: ({ loaderData }: { loaderData: { title: string } }) => loaderData.title ?? "Detail Document",
+      label: ({ loaderData }: { loaderData?: { title: string } }) => loaderData?.title ?? "Detail Document",
     },
   },
   loader: async ({ params, context: { queryClient, orpc } }) => {
