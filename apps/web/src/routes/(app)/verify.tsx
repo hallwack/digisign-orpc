@@ -21,6 +21,15 @@ export const Route = createFileRoute("/(app)/verify")({
   staticData: {
     breadcrumb: { label: "Verifikasi" },
   },
+  head: () => ({
+    meta: [
+      { title: "Verifikasi Dokumen - Veridoc" },
+      {
+        name: "description",
+        content: "Verifikasi dokumen Anda",
+      },
+    ],
+  }),
 });
 
 const statusMap = {

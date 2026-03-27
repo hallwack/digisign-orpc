@@ -20,11 +20,11 @@ export const Route = createRootRouteWithContext<RouterAppContext>()({
   head: () => ({
     meta: [
       {
-        title: "veridoc",
+        title: "Veridoc",
       },
       {
         name: "description",
-        content: "veridoc is a web application",
+        content: "Veridoc is a web application",
       },
     ],
     links: [

@@ -10,6 +10,15 @@ export const Route = createFileRoute("/(app)/")({
   staticData: {
     breadcrumb: { label: "Beranda" },
   },
+  head: () => ({
+    meta: [
+      { title: "Veridoc" },
+      {
+        name: "description",
+        content: "Verifikasi dokumen Anda",
+      },
+    ],
+  }),
 });
 
 function HomePageComponent() {

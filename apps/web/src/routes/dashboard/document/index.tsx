@@ -7,6 +7,15 @@ export const Route = createFileRoute("/dashboard/document/")({
   staticData: {
     breadcrumb: { label: "Dokumen" },
   },
+  head: () => ({
+    meta: [
+      { title: "Dashboard - Veridoc" },
+      {
+        name: "description",
+        content: "Verifikasi dokumen Anda",
+      },
+    ],
+  }),
 });
 
 function DashboardDocumentIndexPageComponent() {
