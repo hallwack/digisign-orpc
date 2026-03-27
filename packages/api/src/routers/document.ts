@@ -3,6 +3,7 @@ import { SignatureService } from "@digisign/db/services/signature";
 import {
   documentDataTableRequestSchema,
   documentFileUploadSchema,
+  documentIdActionSchema,
   documentIdSchema,
   documentSignSchema,
   documentUploadSchema,
@@ -131,7 +132,7 @@ export const documentRouter = {
       summary: "Delete Document",
       description: "Delete a document by ID",
     })
-    .input(documentIdSchema)
+    .input(documentIdActionSchema)
     .handler(async ({ input }) => {
       return DocumentService.deleteDocumentById(input.id);
     }),

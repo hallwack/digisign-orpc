@@ -54,6 +54,10 @@ export const keyIdSchema = keySchema.pick({
   id: true,
 });
 
+export const keyIdActionSchema = z.object({
+  id: z.string(),
+});
+
 export type KeyTableItemSchema = z.infer<typeof keyTableItemSchema>;
 export type KeyRegenerateSchema = z.infer<typeof keyRegenerateSchema>;
 export type KeyDataTableRequestSchema = z.infer<typeof keyDataTableRequestSchema>;

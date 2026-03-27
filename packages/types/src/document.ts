@@ -43,6 +43,10 @@ export const documentIdSchema = z.object({
   id: idSchema,
 });
 
+export const documentIdActionSchema = z.object({
+  id: z.string(),
+});
+
 export const documentSignSchema = z.object({
   documentId: idSchema,
   keyId: idSchema,

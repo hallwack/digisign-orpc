@@ -1,5 +1,11 @@
 import { KeyService } from "@digisign/db/services/key";
-import { keyDataTableRequestSchema, keyIdSchema, keyInsertSchema, keyRegenerateSchema } from "@digisign/types";
+import {
+  keyDataTableRequestSchema,
+  keyIdActionSchema,
+  keyIdSchema,
+  keyInsertSchema,
+  keyRegenerateSchema,
+} from "@digisign/types";
 
 import { protectedProcedure } from "..";
 
@@ -50,7 +56,7 @@ export const keyRouter = {
       description:
         "Delete an existing key for documents. This will permanently delete the key and it cannot be recovered.",
     })
-    .input(keyIdSchema)
+    .input(keyIdActionSchema)
     .handler(async ({ input }) => {
       return KeyService.deleteKey(input.id);
     }),
