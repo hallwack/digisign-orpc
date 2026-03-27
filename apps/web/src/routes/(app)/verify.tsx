@@ -1,7 +1,7 @@
 import { useForm } from "@tanstack/react-form";
 import { useMutation } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { CheckIcon, FileIcon, Loader2Icon, UploadIcon, XIcon } from "lucide-react";
+import { AlertTriangleIcon, CheckIcon, FileIcon, Loader2Icon, UploadIcon, XIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { documentFileUploadSchema } from "@digisign/types";
@@ -41,13 +41,13 @@ const statusMap = {
   INVALID: {
     icon: XIcon,
     alertClass: "bg-red-50 dark:bg-red-950 text-red-900 dark:text-red-50 border-red-200 dark:border-red-900",
-    alertTitle: "Peringatan: Dokumen Tidak Valid",
+    alertTitle: "Dokumen Tidak Valid",
   },
   WARNING: {
-    icon: XIcon,
+    icon: AlertTriangleIcon,
     alertClass:
-      "bg-yellow-50 dark:bg-yellow-800 text-yellow-900 dark:text-yellow-100 border-yellow-200 dark:border-yellow-600",
-    alertTitle: "Peringatan: Validitas Dokumen Diragukan",
+      "bg-yellow-50 dark:bg-yellow-950/70 text-yellow-900 dark:text-yellow-100 border-yellow-200 dark:border-yellow-600",
+    alertTitle: "Validitas Dokumen Diragukan",
   },
 };
 
@@ -82,7 +82,6 @@ function VerifyPageComponent() {
     },
   });
 
-  // Ekstraksi variabel agar JSX lebih bersih dan mencegah error undefined
   const responseData = mutation.data;
   const statusKey = responseData?.status as keyof typeof statusMap | undefined;
   const config = statusKey ? statusMap[statusKey] : statusMap.VALID;
@@ -202,7 +201,6 @@ function VerifyPageComponent() {
           <Card>
             <CardHeader>
               <CardTitle>Hasil Verifikasi</CardTitle>
-              {/* Diperbaiki: Card Description sebelumnya keliru hasil copy-paste */}
               <CardDescription>Ringkasan detail kriptografi dan validitas dokumen</CardDescription>
             </CardHeader>
             <Separator />
@@ -224,7 +222,7 @@ function VerifyPageComponent() {
                   <Alert className={cn(config.alertClass)}>
                     <StatusIcon className="h-4 w-4" />
                     <AlertTitle>{config.alertTitle}</AlertTitle>
-                    <AlertDescription>{responseData.message}</AlertDescription>
+                    <AlertDescription className="">{responseData.message}</AlertDescription>
                   </Alert>
 
                   {dataDetails && (
@@ -241,7 +239,6 @@ function VerifyPageComponent() {
 
                             <span className="text-muted-foreground">Waktu Sign</span>
                             <span className="col-span-2">
-                              {/* Diperbaiki: Mencegah 'Invalid Date' jika signedAt undefined/null */}
                               {signatureData?.signedAt ? formatDate(new Date(signatureData.signedAt)) : "N/A"}
                             </span>
 
