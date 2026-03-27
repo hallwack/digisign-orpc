@@ -1,5 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import { existsSync, rmSync } from "node:fs";
+import { existsSync, rmSync, stat } from "node:fs";
 import path, { join, resolve } from "node:path";
 
 import type { DocumentFileUploadSchema, DocumentSignSchema } from "@digisign/types";
@@ -76,6 +76,7 @@ export class SignatureService {
     const extractedMetadata = await verifyDocumentSignature(form.file);
 
     const defaultReturn = {
+      status: "INVALID", // VALID, INVALID, WARNING
       isAuthentic: false,
       message: "",
       extractedMetadata,
@@ -86,6 +87,7 @@ export class SignatureService {
     if (!extractedMetadata.hasSignature || !extractedMetadata.signatureData) {
       return {
         ...defaultReturn,
+        status: "INVALID",
         message: "Peringatan: Tidak ditemukan metadata tanda tangan digital yang valid pada dokumen ini.",
       };
     }
@@ -97,6 +99,7 @@ export class SignatureService {
       return {
         ...defaultReturn,
         // PERBAIKAN PESAN BUG:
+        status: "INVALID",
         message:
           "Peringatan: Integritas dokumen terkompromi. Isi dokumen telah dimodifikasi atau diubah setelah ditandatangani.",
       };
@@ -118,6 +121,7 @@ export class SignatureService {
     if (!result) {
       return {
         ...defaultReturn,
+        status: "INVALID",
         message: "Data tanda tangan, pengguna, atau dokumen tidak ditemukan di dalam sistem database.",
       };
     }
@@ -134,6 +138,7 @@ export class SignatureService {
 
     let finalIsAuthentic = cryptoVerification.isAuthentic;
     let finalMessage = "Status: VALID. Dokumen utuh dan tanda tangan kriptografi terverifikasi.";
+    let finalStatus = "VALID";
 
     // 5. PENGECEKAN VALIDITAS HISTORIS (KUNCI DICABUT)
     if (finalIsAuthentic && keyData.revokedAt !== null) {
@@ -144,24 +149,29 @@ export class SignatureService {
       if (signedTime > revokedTime) {
         // SKENARIO ILEGAL: Ditandatangani SETELAH kunci mati
         finalIsAuthentic = false;
+        finalStatus = "INVALID";
         finalMessage =
           "Status: TIDAK SAH. Secara kriptografi valid, namun dokumen ini ditandatangani SETELAH kunci publik pemiliknya dicabut (Revoked). Ini mengindikasikan penyalahgunaan kunci.";
       } else {
         // SKENARIO SAH: Ditandatangani SEBELUM kunci mati (Validitas Historis)
+        finalStatus = "WARNING";
         finalMessage =
           "Status: VALID (Dengan Catatan). Dokumen ini sah karena ditandatangani pada saat kunci masih aktif. Catatan: Kunci publik ini sekarang telah dicabut (Revoked) oleh pemiliknya.";
       }
     } else if (!finalIsAuthentic) {
+      finalStatus = "INVALID";
       finalMessage = `Status: TIDAK SAH. Gagal pada validasi kriptografi. RSA Valid: ${cryptoVerification.rsaValid}. EdDSA Valid: ${cryptoVerification.eddsaValid}`;
     }
 
     if (finalIsAuthentic && documentData.deletedAt !== null) {
       // Kita HANYA menambahkan (append) pesan tambahan, TANPA mengubah finalIsAuthentic.
+      finalStatus = finalStatus === "VALID" ? "WARNING" : finalStatus; // Jika sudah INVALID, tetap INVALID. Jika VALID, naikkan ke WARNING.
       finalMessage +=
         " (Catatan Sistem: Salinan dokumen ini telah diarsipkan/dihapus dari antarmuka utama oleh pihak penandatangan, namun validitas hukum dan tanda tangannya tetap berlaku penuh).";
     }
 
     return {
+      status: finalStatus,
       isAuthentic: finalIsAuthentic,
       message: finalMessage,
       extractedMetadata,
