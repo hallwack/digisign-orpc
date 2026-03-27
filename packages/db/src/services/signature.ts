@@ -86,7 +86,7 @@ export class SignatureService {
     if (!extractedMetadata.hasSignature || !extractedMetadata.signatureData) {
       return {
         ...defaultReturn,
-        message: "No valid signature metadata found in the document.",
+        message: "Peringatan: Tidak ditemukan metadata tanda tangan digital yang valid pada dokumen ini.",
       };
     }
 
@@ -96,8 +96,9 @@ export class SignatureService {
     if (!isContentIntact) {
       return {
         ...defaultReturn,
+        // PERBAIKAN PESAN BUG:
         message:
-          "Document content is intact and matches the original hash. No tampering detected. Proceeding to cryptographic verification.",
+          "Peringatan: Integritas dokumen terkompromi. Isi dokumen telah dimodifikasi atau diubah setelah ditandatangani.",
       };
     }
 
@@ -117,7 +118,7 @@ export class SignatureService {
     if (!result) {
       return {
         ...defaultReturn,
-        message: "Signature record or associated key/user not found in the database.",
+        message: "Data tanda tangan, pengguna, atau dokumen tidak ditemukan di dalam sistem database.",
       };
     }
 
@@ -132,24 +133,32 @@ export class SignatureService {
     });
 
     let finalIsAuthentic = cryptoVerification.isAuthentic;
-    let finalMessage = "Document signature is valid and content is intact.";
+    let finalMessage = "Status: VALID. Dokumen utuh dan tanda tangan kriptografi terverifikasi.";
 
-    // Cek ketika signature valid tapi key sudah direvoke
+    // 5. PENGECEKAN VALIDITAS HISTORIS (KUNCI DICABUT)
     if (finalIsAuthentic && keyData.revokedAt !== null) {
-      // Jika dokumen ditandatangani sebelum key direvoke, maka masih dianggap valid tapi dengan catatan bahwa key sudah direvoke
-      if ((signatureData.signedAt !== null && signatureData?.signedAt) > keyData.revokedAt) {
-        // Jika dokumen ditandatangani setelah key direvoke, maka dianggap tidak valid
+      // Menggunakan .getTime() agar komparasi tanggal lebih akurat di TypeScript/NodeJS
+      const signedTime = signatureData.signedAt ? new Date(signatureData.signedAt).getTime() : 0;
+      const revokedTime = new Date(keyData.revokedAt).getTime();
+
+      if (signedTime > revokedTime) {
+        // SKENARIO ILEGAL: Ditandatangani SETELAH kunci mati
         finalIsAuthentic = false;
         finalMessage =
-          "Document signature is valid and content is intact. However, the signing key was revoked after this document was signed.";
+          "Status: TIDAK SAH. Secara kriptografi valid, namun dokumen ini ditandatangani SETELAH kunci publik pemiliknya dicabut (Revoked). Ini mengindikasikan penyalahgunaan kunci.";
       } else {
-        // Jika dokumen ditandatangani sebelum key direvoke, maka masih dianggap valid tapi dengan catatan bahwa key sudah direvoke
+        // SKENARIO SAH: Ditandatangani SEBELUM kunci mati (Validitas Historis)
         finalMessage =
-          "Valid document signature and content, but the signing key has been revoked. Please check the key's revocation date against the document's signing date for more details.";
+          "Status: VALID (Dengan Catatan). Dokumen ini sah karena ditandatangani pada saat kunci masih aktif. Catatan: Kunci publik ini sekarang telah dicabut (Revoked) oleh pemiliknya.";
       }
-      // Catatan: Dalam kasus ini, kita masih menganggap signature valid karena secara kriptografi signature tersebut valid untuk dokumen tersebut. Namun, kita memberikan catatan bahwa key yang digunakan untuk menandatangani sudah direvoke, sehingga pengguna harus memeriksa tanggal penandatanganan dokumen terhadap tanggal revokasi key untuk menentukan apakah signature tersebut dapat dipercaya atau tidak.
     } else if (!finalIsAuthentic) {
-      finalMessage = `Document signature is invalid. RSA Valid: ${cryptoVerification.rsaValid}. EdDSA Valid: ${cryptoVerification.eddsaValid}`;
+      finalMessage = `Status: TIDAK SAH. Gagal pada validasi kriptografi. RSA Valid: ${cryptoVerification.rsaValid}. EdDSA Valid: ${cryptoVerification.eddsaValid}`;
+    }
+
+    if (finalIsAuthentic && documentData.deletedAt !== null) {
+      // Kita HANYA menambahkan (append) pesan tambahan, TANPA mengubah finalIsAuthentic.
+      finalMessage +=
+        " (Catatan Sistem: Salinan dokumen ini telah diarsipkan/dihapus dari antarmuka utama oleh pihak penandatangan, namun validitas hukum dan tanda tangannya tetap berlaku penuh).";
     }
 
     return {
