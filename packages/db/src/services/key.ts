@@ -150,16 +150,25 @@ export class KeyService {
     if (!id) throw new ValidationError("Invalid key ID");
 
     const checkKey = await db.query.keyTable.findFirst({
-      where: (keyTable, { eq }) => eq(lowerSql(keyTable.id), id),
+      where: (keyTable, { eq, and, isNull }) => and(eq(lowerSql(keyTable.id), id), isNull(keyTable.revokedAt)),
     });
-    if (!checkKey) throw new NotFoundError("Key not found");
+    if (!checkKey) throw new NotFoundError("Key not found or already revoked");
 
-    const revokedKey = await db
-      .update(keyTable)
-      .set({ revokedAt: new Date() })
-      .where(eq(lowerSql(keyTable.id), id))
-      .returning();
-    if (!revokedKey || revokedKey.length === 0) throw new InternalError("Invalid key ID");
+    const isKeyUsed = await db.query.signatureTable.findFirst({
+      where: (signatureTable, { eq }) => eq(signatureTable.keyId, checkKey.id),
+    });
+
+    if (!isKeyUsed) {
+      const deleteData = await db.delete(keyTable).where(eq(keyTable.id, checkKey.id)).returning();
+      if (!deleteData || deleteData.length === 0) throw new InternalError("Failed to delete key");
+    } else {
+      const updateDataToDeleted = await db
+        .update(keyTable)
+        .set({ revokedAt: new Date() })
+        .where(eq(lowerSql(keyTable.id), id))
+        .returning();
+      if (!updateDataToDeleted || updateDataToDeleted.length === 0) throw new InternalError("Failed to revoke key");
+    }
 
     return {
       message: "Key revoked successfully",

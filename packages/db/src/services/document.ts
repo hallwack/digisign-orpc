@@ -1,5 +1,5 @@
 import { SQL, and, asc, count, desc, eq, gte, ilike, lte } from "drizzle-orm";
-import { mkdirSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { join, resolve } from "node:path";
@@ -256,22 +256,30 @@ export class DocumentService {
     const { id: documentId, title } = parseSlug(id);
     if (!documentId) throw new InternalError("Invalid document ID");
 
+    const checkDocument = await db.query.documentTable.findFirst({
+      where: (documentTable, { eq, and, isNull }) =>
+        and(eq(lowerSql(documentTable.id), documentId), isNull(documentTable.deletedAt)),
+    });
+    if (!checkDocument) throw new NotFoundError("Document not found or already deleted");
+
+    const hasSignature = await db.query.signatureTable.findFirst({
+      where: (signatureTable, { eq }) => eq(signatureTable.documentId, checkDocument.id),
+    });
+
     const documentPath = join("public", "documents");
     const documentDir = convertToSlug(`${title}-${documentId}`);
+    const targetFolder = join(documentPath, documentDir);
 
-    const checkDocument = await db.query.documentTable.findFirst({
-      where: (documentTable, { eq }) => eq(lowerSql(documentTable.id), documentId),
-    });
-    if (!checkDocument) throw new NotFoundError("Document not found");
-
-    const deleteData = await db.delete(documentTable).where(eq(documentTable.id, checkDocument.id)).returning();
-    if (!deleteData) throw new NotFoundError("Document not found");
-
-    if (deleteData) {
-      rmSync(join(documentPath, documentDir), {
-        recursive: true,
-        force: true,
-      });
+    if (!hasSignature) {
+      const deleteData = await db.delete(documentTable).where(eq(documentTable.id, checkDocument.id)).returning();
+      if (!deleteData) throw new NotFoundError("Document not found");
+      if (existsSync(targetFolder)) rmSync(targetFolder, { recursive: true, force: true });
+    } else {
+      const updateDataToDeleted = await db
+        .update(documentTable)
+        .set({ deletedAt: new Date() })
+        .where(eq(documentTable.id, checkDocument.id));
+      if (!updateDataToDeleted) throw new NotFoundError("Document not found");
     }
   }
 
