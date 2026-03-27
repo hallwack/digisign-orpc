@@ -28,18 +28,18 @@ export default function DocumentSignForm({ documents }: SignDocumentFormProps) {
         const fileName = data.fileName;
 
         if (!fileData || !mimeType || !fileName) {
-          throw new Error("Missing file data for download");
+          throw new Error("File tidak ditemukan untuk di-download");
         } else {
           const blob = base64ToBlob(fileData, mimeType);
           downloadBlob(blob, fileName);
         }
 
-        toast.success("Document signed successfully.");
+        toast.success("Dokumen berhasil ditandatangani");
         navigate({ to: "/dashboard/document" });
       },
       onError: (error) => {
-        console.error("Document signing failed:", error);
-        toast.error("Document signing failed. Please try again.");
+        console.error("Dokumen gagal ditandatangani", error);
+        toast.error("Dokumen gagal ditandatangani. Silahkan coba lagi.");
       },
     }),
   );
@@ -54,14 +54,14 @@ export default function DocumentSignForm({ documents }: SignDocumentFormProps) {
     },
     onSubmit: async ({ value }) => {
       const selectedDocument = documents.find((doc) => doc.id === value.documentId);
-      if (!selectedDocument) throw new Error("Document not found!");
+      if (!selectedDocument) throw new Error("Dokumen tidak ditemukan");
       const documentHash = selectedDocument.hash;
 
       const privateKeyFile = await value.privateKeyFile.text();
       const { id: keyId, eddsaKey, rsaKey } = parsePemSections(privateKeyFile);
 
-      if (!keyId) throw new Error("Invalid key ID");
-      if (!rsaKey || !eddsaKey) throw new Error("Invalid keys");
+      if (!keyId) throw new Error("Key ID tidak ditemukan");
+      if (!rsaKey || !eddsaKey) throw new Error("Key tidak ditemukan");
 
       const startSigningTime = performance.now();
 
@@ -105,7 +105,7 @@ export default function DocumentSignForm({ documents }: SignDocumentFormProps) {
                   const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
                   return (
                     <Field data-invalid={isInvalid}>
-                      <FieldLabel htmlFor={field.name}>Document</FieldLabel>
+                      <FieldLabel htmlFor={field.name}>Dokumen</FieldLabel>
                       <Select
                         name={field.name}
                         value={field.state.value}
@@ -115,8 +115,8 @@ export default function DocumentSignForm({ documents }: SignDocumentFormProps) {
                         aria-invalid={isInvalid}
                       >
                         <SelectTrigger id={field.name}>
-                          <SelectValue placeholder="Select Document">
-                            {documents.find((doc) => doc.id === field.state.value)?.title || "Select Document"}
+                          <SelectValue placeholder="Pilih Dokumen">
+                            {documents.find((doc) => doc.id === field.state.value)?.title || "Pilih Dokumen"}
                           </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
@@ -138,7 +138,7 @@ export default function DocumentSignForm({ documents }: SignDocumentFormProps) {
                   const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
                   return (
                     <Field data-invalid={isInvalid}>
-                      <FieldLabel htmlFor={field.name}>Private Key File</FieldLabel>
+                      <FieldLabel htmlFor={field.name}>File Private Key</FieldLabel>
                       <Input
                         accept=".pem,.key"
                         type="file"

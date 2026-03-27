@@ -7,7 +7,7 @@ import DocumentSignForm from "./-components/document-sign-form";
 export const Route = createFileRoute("/dashboard/document/sign")({
   component: DashboardDocumentSignPageComponent,
   staticData: {
-    breadcrumb: { label: "Sign Document" },
+    breadcrumb: { label: "Tandatangan Dokumen" },
   },
   loader: async ({ context: { queryClient } }) => {
     const documents = await queryClient.fetchQuery(orpc.document.all.queryOptions());
@@ -20,7 +20,7 @@ function DashboardDocumentSignPageComponent() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold tracking-tight">Sign Document</h1>
+      <h1 className="text-2xl font-bold tracking-tight">Tandatangan Dokumen</h1>
 
       <DocumentSignForm documents={documents} />
     </div>

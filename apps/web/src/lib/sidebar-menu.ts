@@ -8,8 +8,6 @@ import {
   KeyRound,
   LayoutDashboard,
   Settings,
-  User,
-  Users,
 } from "lucide-react";
 
 export const sidebarMainMenu = [
@@ -25,83 +23,83 @@ export const sidebarMainMenu = [
         icon: LayoutDashboard,
       },
       /* {
-        title: "Generate Signature",
-        shortName: "Generate",
+        title: "Buat Tanda Tangan",
+        shortName: "Buat",
         url: "/dashboard/generate-signature",
         icon: FileCheck,
       },
       {
-        title: "Append Signature to File",
-        shortName: "Append",
+        title: "Tambahkan Tanda Tangan ke Berkas",
+        shortName: "Tambahkan",
         url: "/dashboard/append-file",
         icon: FileLock2,
       }, */
     ],
   },
   {
-    title: "Document Management",
-    shortName: "Document",
+    title: "Manajemen Dokumen",
+    shortName: "Dokumen",
     url: "#",
     items: [
       {
-        title: "All Documents",
-        shortName: "Documents",
+        title: "Dokumen",
+        shortName: "Dokumen",
         url: "/dashboard/document",
         icon: FileStack,
       },
       {
-        title: "Upload Documents",
-        shortName: "Upload",
+        title: "Unggah Dokumen",
+        shortName: "Unggah",
         url: "/dashboard/document/upload",
         icon: FileUp,
       },
       {
-        title: "Sign Documents",
-        shortName: "Sign",
+        title: "Tanda Tangani Dokumen",
+        shortName: "Tanda Tangani",
         url: "/dashboard/document/sign",
         icon: FileKey,
       },
       {
-        title: "Verify Documents",
-        shortName: "Verify",
+        title: "Verifikasi Dokumen",
+        shortName: "Verifikasi",
         url: "/dashboard/document/verify",
         icon: FileCheck,
       },
     ],
   },
   {
-    title: "Key Management",
+    title: "Manajemen Key",
     shortName: "Key",
     url: "#",
     items: [
       {
-        title: "All Keys",
-        shortName: "Keys",
+        title: "Key",
+        shortName: "Key",
         url: "/dashboard/key",
         icon: FolderKey,
       },
       {
-        title: "Create Key",
-        shortName: "Create",
+        title: "Buat Kunci",
+        shortName: "Buat",
         url: "/dashboard/key/create",
         icon: KeyRound,
       },
     ],
   },
   /* {
-    title: "User and Role Management",
-    shortName: "User & Role",
+    title: "Manajemen Pengguna dan Peran",
+    shortName: "Pengguna & Peran",
     url: "#",
     items: [
       {
-        title: "User Management",
-        shortName: "User",
+        title: "Manajemen Pengguna",
+        shortName: "Pengguna",
         url: "/dashboard/admin/user-management",
         icon: User,
       },
       {
-        title: "Role Management",
-        shortName: "Role",
+        title: "Manajemen Peran",
+        shortName: "Peran",
         url: "/dashboard/admin/role-management",
         icon: Users,
       },
@@ -109,4 +107,4 @@ export const sidebarMainMenu = [
   }, */
 ];
 
-export const sidebarFooterMenu = [{ title: "Settings", url: "/settings", icon: Settings }];
+export const sidebarFooterMenu = [{ title: "Pengaturan", url: "/settings", icon: Settings }];

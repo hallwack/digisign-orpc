@@ -26,12 +26,12 @@ export default function DocumentUploadForm() {
   const mutation = useMutation(
     orpc.document.upload.mutationOptions({
       onSuccess: () => {
-        toast.success("Document uploaded successfully.");
+        toast.success("Dokumen berhasil di-upload");
         navigate({ to: "/dashboard/document" });
       },
       onError: (error) => {
-        console.error("Document upload failed:", error);
-        toast.error("Document upload failed. Please try again.");
+        console.error("Dokumen gagal di-upload", error);
+        toast.error("Dokumen gagal di-upload. Silahkan coba lagi.");
       },
     }),
   );
@@ -63,8 +63,8 @@ export default function DocumentUploadForm() {
           >
             <FieldGroup>
               <FieldSet>
-                <FieldLegend>Document Information</FieldLegend>
-                <FieldDescription>Provide the document details below.</FieldDescription>
+                <FieldLegend>Informasi Dokumen</FieldLegend>
+                <FieldDescription>Masukkan informasi dokumen di bawah ini.</FieldDescription>
                 <FieldGroup>
                   <div className="grid grid-cols-2 gap-4">
                     <form.Field
@@ -81,7 +81,7 @@ export default function DocumentUploadForm() {
                               onBlur={field.handleBlur}
                               onChange={(e) => field.handleChange(e.target.value)}
                               aria-invalid={isInvalid}
-                              placeholder="E.g. Contract Agreement"
+                              placeholder="Contoh: Perjanjian Kontrak"
                             />
                             {isInvalid && <FieldError errors={field.state.meta.errors} />}
                           </Field>
@@ -95,7 +95,7 @@ export default function DocumentUploadForm() {
                         const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
                         return (
                           <Field data-invalid={isInvalid}>
-                            <FieldLabel htmlFor={field.name}>Description</FieldLabel>
+                            <FieldLabel htmlFor={field.name}>Deskripsi</FieldLabel>
                             <Textarea
                               id={field.name}
                               name={field.name}
@@ -103,7 +103,7 @@ export default function DocumentUploadForm() {
                               onBlur={field.handleBlur}
                               onChange={(e) => field.handleChange(e.target.value)}
                               aria-invalid={isInvalid}
-                              placeholder="E.g. Agreement for services rendered"
+                              placeholder="Contoh: Perjanjian untuk layanan yang diberikan"
                             />
                             {isInvalid && <FieldError errors={field.state.meta.errors} />}
                           </Field>
@@ -117,8 +117,8 @@ export default function DocumentUploadForm() {
               <FieldSeparator />
 
               <FieldSet>
-                <FieldLegend>File Upload</FieldLegend>
-                <FieldDescription>Upload the document file you wish to share and sign.</FieldDescription>
+                <FieldLegend>Upload FIle</FieldLegend>
+                <FieldDescription>Upload dokumen yang ingin Anda bagikan dan tandatangani.</FieldDescription>
                 <FieldGroup>
                   <form.Field
                     name="file"

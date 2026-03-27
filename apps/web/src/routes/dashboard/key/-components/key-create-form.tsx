@@ -22,18 +22,18 @@ export default function KeyCreateForm() {
         const fileName = data.fileName;
 
         if (!fileData || !mimeType || !fileName) {
-          throw new Error("Missing file data for download");
+          throw new Error("File tidak ditemukan untuk di-download");
         } else {
           const blob = base64ToBlob(fileData, mimeType);
           downloadBlob(blob, fileName);
         }
 
-        toast.success("Key created successfully.");
+        toast.success("Key berhasil dibuat.");
         navigate({ to: "/dashboard/key" });
       },
       onError: (error) => {
-        console.error("Key creation failed:", error);
-        toast.error("Key creation failed. Please try again.");
+        console.error("Key gagal dibuat:", error);
+        toast.error("Key gagal dibuat. Silahkan coba lagi.");
       },
     }),
   );
@@ -69,7 +69,7 @@ export default function KeyCreateForm() {
                     const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
                     return (
                       <Field data-invalid={isInvalid}>
-                        <FieldLabel htmlFor={field.name}>Key Name</FieldLabel>
+                        <FieldLabel htmlFor={field.name}>Nama Key</FieldLabel>
                         <Input
                           id={field.name}
                           name={field.name}
@@ -77,7 +77,7 @@ export default function KeyCreateForm() {
                           onBlur={field.handleBlur}
                           onChange={(e) => field.handleChange(e.target.value)}
                           aria-invalid={isInvalid}
-                          placeholder="E.g. My Signing Key"
+                          placeholder="Contoh: Key Signing Saya"
                         />
                         {isInvalid && <FieldError errors={field.state.meta.errors} />}
                       </Field>

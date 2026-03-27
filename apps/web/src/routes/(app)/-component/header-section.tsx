@@ -14,15 +14,15 @@ export default function HeaderSection() {
           <div className="bg-primary text-primary-foreground flex h-8 w-8 items-center justify-center rounded-md p-2">
             <FileIcon size={16} />
           </div>
-          <Link to="/" className="font-display text-foreground font-bold tracking-tight">
+          <Link to="/" className="text-foreground text-lg font-bold tracking-tight">
             Veri<span className="text-primary">doc</span>
           </Link>
         </div>
 
         <nav className="flex items-center gap-4 font-medium">
-          <Link to="/">Home</Link>
-          <Link to="/verify">Verify</Link>
-          <p>How-to</p>
+          <Link to="/">Beranda</Link>
+          <Link to="/verify">Verifikasi</Link>
+          <p>Panduan</p>
         </nav>
 
         <div className="flex items-center gap-2">

@@ -19,7 +19,7 @@ import { orpc } from "@/utils/orpc";
 export const Route = createFileRoute("/(app)/verify")({
   component: VerifyPageComponent,
   staticData: {
-    breadcrumb: { label: "Verify" },
+    breadcrumb: { label: "Verifikasi" },
   },
 });
 
@@ -224,20 +224,18 @@ function VerifyPageComponent() {
                             <span className="col-span-2">
                               {formatDate(new Date(mutation.data.dataDetails.signatureData.signedAt || "N/A"))}
                             </span>
-                            <span className="text-muted-foreground">File Name</span>
+                            <span className="text-muted-foreground">Nama File</span>
                             <span className="col-span-2">
                               {mutation.data.dataDetails.documentData.fileName || "N/A"}
                             </span>
                             <span className="text-muted-foreground">Title</span>
                             <span className="col-span-2">{mutation.data.dataDetails.documentData.title || "N/A"}</span>
-                            <span className="text-muted-foreground">Description</span>
+                            <span className="text-muted-foreground">Deskripsi</span>
                             <span className="col-span-2">
                               {mutation.data.dataDetails.documentData.description || "N/A"}
                             </span>
-                            <span className="text-muted-foreground">Document Hash</span>
-                            <span className="col-span-2">
-                              {mutation.data.dataDetails.documentData.hash || "N/A"}
-                            </span>
+                            <span className="text-muted-foreground">Hash Dokumen</span>
+                            <span className="col-span-2">{mutation.data.dataDetails.documentData.hash || "N/A"}</span>
                           </div>
                         </div>
                       </div>

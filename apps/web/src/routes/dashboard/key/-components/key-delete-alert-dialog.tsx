@@ -23,11 +23,11 @@ export default function KeyDeleteAlertDialog({ id, onSuccess, ...props }: KeyDel
   const deleteMutation = useMutation(
     orpc.key.delete.mutationOptions({
       onSuccess: () => {
-        toast.success("Document uploaded successfully.");
+        toast.success("Key berhasil dihapus.");
       },
       onError: (error) => {
-        console.error("Document delete failed:", error);
-        toast.error("Document delete failed. Please try again.");
+        console.error("Key gagal dihapus:", error);
+        toast.error("Key gagal dihapus. Silahkan coba lagi.");
       },
     }),
   );
@@ -44,18 +44,18 @@ export default function KeyDeleteAlertDialog({ id, onSuccess, ...props }: KeyDel
     <AlertDialog {...props}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+          <AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete your account and remove your data from our
-            servers.
+            Tindakan ini tidak dapat dibatalkan. Ini akan menghapus akun Anda secara permanen dan menghapus data Anda
+            dari server kami.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>Batal</AlertDialogCancel>
           <AlertDialogAction
             render={
               <Button aria-label="Delete Data" onClick={onDelete} variant="destructive" className="text-white">
-                Delete
+                Hapus
               </Button>
             }
           />

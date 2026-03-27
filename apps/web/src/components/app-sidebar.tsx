@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import type { User } from "better-auth/types";
-import { ChevronsUpDown, LogOut, User2 } from "lucide-react";
+import { ChevronsUpDown, FileIcon, LogOut, User2 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -35,8 +35,15 @@ export default function AppSidebar({ user }: { user: User | null }) {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem className="mx-auto my-4">
-            <Link to="/" className="text-xl font-semibold">
-              Digital Signature
+            <Link to="/" className="text-foreground text-xl font-bold tracking-tight">
+              <div className="flex items-center gap-2">
+                <div className="bg-primary text-primary-foreground flex h-8 w-8 items-center justify-center rounded-md p-2">
+                  <FileIcon size={16} />
+                </div>
+                <p>
+                  Veri<span className="text-primary">doc</span>
+                </p>
+              </div>
             </Link>
           </SidebarMenuItem>
         </SidebarMenu>

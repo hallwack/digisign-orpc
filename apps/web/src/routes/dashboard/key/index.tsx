@@ -4,6 +4,9 @@ import KeyDataTable from "./-components/key-datatable";
 
 export const Route = createFileRoute("/dashboard/key/")({
   component: DashboardKeyIndexPageComponent,
+  staticData: {
+    breadcrumb: { label: "Key" },
+  },
 });
 
 function DashboardKeyIndexPageComponent() {

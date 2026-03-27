@@ -8,7 +8,7 @@ import SigningWorkflowSection from "./-component/signing-workflow-section";
 export const Route = createFileRoute("/(app)/")({
   component: HomePageComponent,
   staticData: {
-    breadcrumb: { label: "Home" },
+    breadcrumb: { label: "Beranda" },
   },
 });
 

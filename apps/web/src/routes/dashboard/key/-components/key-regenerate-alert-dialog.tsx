@@ -23,7 +23,6 @@ export default function KeyRegenerateAlertDialog({ id, onSuccess, ...props }: Ke
 
   function onRegenerate() {
     if (id) {
-      console.log("Regenerating key with id:", id);
       regenerateMutation.mutate({ id });
       props.onOpenChangeComplete?.(false);
       onSuccess?.();
@@ -34,18 +33,18 @@ export default function KeyRegenerateAlertDialog({ id, onSuccess, ...props }: Ke
     <AlertDialog {...props}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+          <AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete your current key and generate a new one from our
-            server.
+            Tindakan ini tidak dapat dibatalkan. Ini akan menghapus key Anda saat ini dan membuat key baru dari server
+            kami.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>Batal</AlertDialogCancel>
           <AlertDialogAction
             render={
-              <Button aria-label="Regenerate Data" onClick={onRegenerate} variant="default">
-                Regenerate
+              <Button aria-label="Generate Ulang Key" onClick={onRegenerate} variant="default">
+                Generate Ulang
               </Button>
             }
           />

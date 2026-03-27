@@ -36,19 +36,19 @@ export default function DocumentResignModalForm({ id, onSuccess, ...props }: Doc
         const fileName = data.fileName;
 
         if (!fileData || !mimeType || !fileName) {
-          throw new Error("Missing file data for download");
+          throw new Error("File tidak ditemukan untuk di-download");
         } else {
           const blob = base64ToBlob(fileData, mimeType);
           downloadBlob(blob, fileName);
         }
 
-        toast.success("Document signed successfully.");
+        toast.success("Dokumen berhasil ditandatangani ulang");
         onSuccess?.();
       },
       onError: (error) => {
-        console.error("Document signing failed:", error);
+        console.error("Dokumen gagal ditandatangani ulang", error);
         toast.error(
-          `Document signing failed. Please try again. Error: ${error instanceof Error ? error.message : String(error)}`,
+          `Dokumen gagal ditandatangani ulang. Silahkan coba lagi. Error: ${error instanceof Error ? error.message : String(error)}`,
         );
       },
     }),
@@ -62,14 +62,14 @@ export default function DocumentResignModalForm({ id, onSuccess, ...props }: Doc
       onSubmit: documentKeyUploadSchema,
     },
     onSubmit: async ({ value }) => {
-      if (!documentQuery.data) throw new Error("Document not found");
+      if (!documentQuery.data) throw new Error("Dokumen tidak ditemukan");
 
       const { id: documentId, hash } = documentQuery.data;
       const privateKeyFile = await value.file.text();
       const { id: keyId, eddsaKey, rsaKey } = parsePemSections(privateKeyFile);
 
-      if (!keyId) throw new Error("Invalid key ID");
-      if (!rsaKey || !eddsaKey) throw new Error("Invalid keys");
+      if (!keyId) throw new Error("Key ID tidak ditemukan");
+      if (!rsaKey || !eddsaKey) throw new Error("Key tidak ditemukan");
 
       const startSigningTime = performance.now();
 
@@ -98,9 +98,9 @@ export default function DocumentResignModalForm({ id, onSuccess, ...props }: Doc
     <Dialog {...props}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Resign Document</DialogTitle>
+          <DialogTitle>Tanda Tangan Ulang Dokumen</DialogTitle>
           <DialogDescription>
-            Are you sure you want to resign this document? This action cannot be undone.
+            Apakah anda yakin ingin menandatangani ulang dokumen ini? Tindakan ini tidak dapat dibatalkan.
           </DialogDescription>
         </DialogHeader>
 
@@ -113,13 +113,13 @@ export default function DocumentResignModalForm({ id, onSuccess, ...props }: Doc
         >
           <FieldGroup>
             <div className="rounded-md border p-4">
-              <p className="mb-3 font-medium">Document Information</p>
+              <p className="mb-3 font-medium">Informasi Dokumen</p>
               <div className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5">
                 <p className="text-muted-foreground text-sm">Title</p>
                 <p className="text-sm">{documentQuery.data?.title}</p>
-                <p className="text-muted-foreground text-sm">Description</p>
+                <p className="text-muted-foreground text-sm">Deskripsi</p>
                 <p className="text-sm">{documentQuery.data?.description}</p>
-                <p className="text-muted-foreground text-sm">File Name</p>
+                <p className="text-muted-foreground text-sm">Nama File</p>
                 <p className="text-sm">{documentQuery.data?.fileName}</p>
                 <p className="text-muted-foreground text-sm">Hash</p>
                 <p className="font-mono text-xs break-all">{documentQuery.data?.hash}</p>
@@ -133,7 +133,7 @@ export default function DocumentResignModalForm({ id, onSuccess, ...props }: Doc
                 const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
                 return (
                   <Field data-invalid={isInvalid}>
-                    <FieldLabel htmlFor={field.name}>Private Key File</FieldLabel>
+                    <FieldLabel htmlFor={field.name}>File Private Key</FieldLabel>
                     <Input
                       accept=".pem,.key"
                       type="file"

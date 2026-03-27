@@ -129,9 +129,7 @@ export default function SigningWorkflowSection() {
                       {item.id}
                     </div>
                     <div>
-                      <div className="font-display tracking-snug text-card-foreground mb-1 font-semibold">
-                        {item.title}
-                      </div>
+                      <div className="tracking-snug text-card-foreground mb-1 font-semibold">{item.title}</div>
                       <div className="text-muted-foreground text-sm leading-relaxed">{item.description}</div>
                     </div>
                   </div>

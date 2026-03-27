@@ -26,7 +26,7 @@ export function useKeyColumns({ onDeleteKey, onRegenerateKey }: UseKeyColumnsPro
       {
         id: "id",
         accessorKey: "id",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Key ID" />,
+        header: ({ column }) => <DataTableColumnHeader column={column} title="ID Key" />,
         cell: ({ row }) => <div>{(row.getValue("id") as string).slice(0, 10).padEnd(15, "*")}</div>,
         enableSorting: false,
         enableHiding: false,
@@ -34,11 +34,11 @@ export function useKeyColumns({ onDeleteKey, onRegenerateKey }: UseKeyColumnsPro
       {
         id: "keyName",
         accessorKey: "keyName",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Key Name" />,
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Nama Key" />,
         cell: ({ row }) => <div>{row.getValue("keyName")}</div>,
         meta: {
-          label: "Key Name",
-          placeholder: "Search by key name",
+          label: "Nama Key",
+          placeholder: "Cari berdasarkan nama key",
           variant: "text",
         },
         enableColumnFilter: true,
@@ -46,17 +46,17 @@ export function useKeyColumns({ onDeleteKey, onRegenerateKey }: UseKeyColumnsPro
       {
         id: "createdAt",
         accessorKey: "createdAt",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Created At" />,
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Dibuat Pada" />,
         cell: ({ row }) => formatDate(row.getValue<Date>("createdAt")),
         meta: {
-          label: "Created At",
+          label: "Dibuat Pada",
           variant: "dateRange",
         },
         enableColumnFilter: true,
       },
       {
         id: "actions",
-        header: "Actions",
+        header: "Aksi",
         cell: ({ row }) => {
           const url = convertToSlug(`${row.original.keyName}-${row.original.id}`);
 
@@ -64,9 +64,9 @@ export function useKeyColumns({ onDeleteKey, onRegenerateKey }: UseKeyColumnsPro
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Button variant="ghost" size="icon" className="h-8 w-8 cursor-pointer">
                     <MoreHorizontalIcon className="h-4 w-4" />
-                    <span className="sr-only">Open menu</span>
+                    <span className="sr-only">Buka menu</span>
                   </Button>
                 }
               />
@@ -74,14 +74,14 @@ export function useKeyColumns({ onDeleteKey, onRegenerateKey }: UseKeyColumnsPro
                 <DropdownMenuGroup>
                   <DropdownMenuItem className="cursor-pointer" onClick={() => onRegenerateKey?.(url)}>
                     <KeyIcon className="mr-2 h-4 w-4" />
-                    Regenerate Key
+                    Generate Ulang Key
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="text-destructive focus:text-destructive cursor-pointer"
                     onClick={() => onDeleteKey?.(url)}
                   >
                     <TrashIcon className="mr-2 h-4 w-4" />
-                    Delete Key
+                    Hapus Key
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
               </DropdownMenuContent>

@@ -57,11 +57,11 @@ export default function DocumentDetail({ detail }: { detail: DocumentDetailRespo
       if (response) {
         const blob = base64ToBlob(response.fileBuffer, response.mimeType);
         downloadBlob(blob, response.fileName);
-        toast.success("Download started.");
+        toast.success("Download dimulai");
       }
     } catch (error) {
-      console.error("Download failed:", error);
-      toast.error("Download failed. Please try again.");
+      console.error("Download gagal", error);
+      toast.error("Download gagal. Silahkan coba lagi.");
     } finally {
       setDownloadType(null);
     }

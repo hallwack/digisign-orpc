@@ -23,11 +23,11 @@ export default function DocumentDeleteAlertDialog({ id, onSuccess, ...props }: D
   const deleteMutation = useMutation(
     orpc.document.delete.mutationOptions({
       onSuccess: () => {
-        toast.success("Document uploaded successfully.");
+        toast.success("Dokumen berhasil dihapus");
       },
       onError: (error) => {
-        console.error("Document delete failed:", error);
-        toast.error("Document delete failed. Please try again.");
+        console.error("Dokumen gagal dihapus", error);
+        toast.error("Dokumen gagal dihapus. Silahkan coba lagi.");
       },
     }),
   );
@@ -44,18 +44,17 @@ export default function DocumentDeleteAlertDialog({ id, onSuccess, ...props }: D
     <AlertDialog {...props}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+          <AlertDialogTitle>Apakah anda yakin?</AlertDialogTitle>
           <AlertDialogDescription>
-            This action cannot be undone. This will permanently delete your account and remove your data from our
-            servers.
+            Tindakan ini tidak dapat dibatalkan. Ini akan menghapus dokumen secara permanen dari server kami.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel>Batal</AlertDialogCancel>
           <AlertDialogAction
             render={
-              <Button aria-label="Delete Data" onClick={onDelete} variant="destructive" className="text-white">
-                Delete
+              <Button aria-label="Hapus Dokumen" onClick={onDelete} variant="destructive" className="text-white">
+                Hapus
               </Button>
             }
           />

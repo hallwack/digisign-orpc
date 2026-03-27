@@ -9,7 +9,7 @@ export default function FooterSection() {
           <div className="bg-primary text-primary-foreground flex h-8 w-8 items-center justify-center rounded-md p-2">
             <FileIcon size={16} />
           </div>
-          <Link to="/" className="font-display text-foreground font-bold tracking-tight">
+          <Link to="/" className="text-foreground text-lg font-bold tracking-tight">
             Veri<span className="text-primary">doc</span>
           </Link>
         </div>

@@ -32,7 +32,7 @@ export function useDocumentColumns({
       {
         id: "id",
         accessorKey: "id",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Document ID" />,
+        header: ({ column }) => <DataTableColumnHeader column={column} title="ID Dokumen" />,
         cell: ({ row }) => <div>{(row.getValue("id") as string).slice(0, 10).padEnd(15, "*")}</div>,
         enableSorting: false,
         enableHiding: false,
@@ -44,7 +44,7 @@ export function useDocumentColumns({
         cell: ({ row }) => <div>{row.getValue("title")}</div>,
         meta: {
           label: "Title",
-          placeholder: "Search by title",
+          placeholder: "Cari berdasarkan title",
           variant: "text",
         },
         enableColumnFilter: true,
@@ -52,10 +52,10 @@ export function useDocumentColumns({
       {
         id: "createdAt",
         accessorKey: "createdAt",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Created At" />,
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Dibuat Pada" />,
         cell: ({ row }) => formatDate(row.getValue<Date>("createdAt")),
         meta: {
-          label: "Created At",
+          label: "Dibuat Pada",
           variant: "dateRange",
         },
         enableColumnFilter: true,
@@ -63,24 +63,24 @@ export function useDocumentColumns({
       {
         id: "signedAt",
         accessorKey: "signedAt",
-        header: ({ column }) => <DataTableColumnHeader column={column} title="Signed At" />,
+        header: ({ column }) => <DataTableColumnHeader column={column} title="Ditandatangani Pada" />,
         cell: ({ row }) => formatDate(row.getValue<Date>("signedAt")),
         meta: {
-          label: "Signed At",
+          label: "Ditandatangani Pada",
           variant: "dateRange",
         },
         enableColumnFilter: true,
       },
       {
         id: "actions",
-        header: "Actions",
+        header: "Aksi",
         cell: ({ row }) => {
           const url = convertToSlug(`${row.original.title}-${row.original.id}`);
           return (
             <DropdownMenu>
               <DropdownMenuTrigger
                 render={
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Button variant="ghost" size="icon" className="h-8 w-8 cursor-pointer">
                     <MoreHorizontalIcon className="h-4 w-4" />
                     <span className="sr-only">Open menu</span>
                   </Button>
@@ -99,14 +99,14 @@ export function useDocumentColumns({
                         }}
                       >
                         <EyeIcon className="mr-2 h-4 w-4" />
-                        View Document
+                        Lihat Dokumen
                       </Link>
                     }
                   />
                   {row.original.signedAt && (
                     <DropdownMenuItem className="cursor-pointer" onClick={() => onResignDocument?.(row.original.id)}>
                       <KeyIcon className="mr-2 h-4 w-4" />
-                      Resign Document
+                      Tanda Tangan Ulang Dokumen
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem
@@ -114,7 +114,7 @@ export function useDocumentColumns({
                     onClick={() => onDeleteDocument?.(url)}
                   >
                     <TrashIcon className="mr-2 h-4 w-4" />
-                    Delete Document
+                    Hapus Dokumen
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
               </DropdownMenuContent>

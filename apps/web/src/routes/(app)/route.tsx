@@ -6,7 +6,7 @@ import HeaderSection from "./-component/header-section";
 export const Route = createFileRoute("/(app)")({
   component: RouteComponent,
   staticData: {
-    breadcrumb: { label: "Home" },
+    breadcrumb: { label: "Beranda" },
   },
 });
 
