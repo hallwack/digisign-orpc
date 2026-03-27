@@ -1,6 +1,8 @@
 import { useForm } from "@tanstack/react-form";
 import { Link } from "@tanstack/react-router";
 
+import { loginSchema } from "@digisign/types";
+
 import { PasswordInput } from "@/components/password-input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,8 +10,6 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 import { Input } from "@/components/ui/input";
 import { useLoginFn } from "@/hooks/query-mutation/auth";
 import { cn } from "@/lib/utils";
-
-import { loginSchema } from "../-types";
 
 export default function LoginForm({ className, ...props }: React.ComponentProps<"div">) {
   const { mutate, isPending } = useLoginFn();
@@ -91,9 +91,9 @@ export default function LoginForm({ className, ...props }: React.ComponentProps<
                 Login
               </Button>
               <p className="text-center text-sm">
-                Don&apos;t have an account?{" "}
+                Tidak memiliki akun?
                 <Link to="/register" className="underline underline-offset-4">
-                  Sign up
+                  Daftar sekarang!
                 </Link>
               </p>
             </div>

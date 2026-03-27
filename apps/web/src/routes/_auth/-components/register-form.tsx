@@ -1,6 +1,8 @@
 import { useForm } from "@tanstack/react-form";
 import { Link } from "@tanstack/react-router";
 
+import { registerSchema } from "@digisign/types";
+
 import { PasswordInput } from "@/components/password-input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,8 +10,6 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field
 import { Input } from "@/components/ui/input";
 import { useRegisterFn } from "@/hooks/query-mutation/auth";
 import { cn } from "@/lib/utils";
-
-import { registerSchema } from "../-types";
 
 export default function RegisterForm({ className, ...props }: React.ComponentProps<"div">) {
   const { mutate, isPending } = useRegisterFn();
@@ -133,12 +133,12 @@ export default function RegisterForm({ className, ...props }: React.ComponentPro
 
             <div className="flex flex-col gap-4">
               <Button disabled={isPending} type="submit" className="w-full">
-                Register
+                Daftar
               </Button>
               <p className="text-center text-sm">
-                Have an account?{" "}
+                Sudah punya akun?
                 <Link to="/login" className="underline underline-offset-4">
-                  Sign in
+                  Login sekarang!
                 </Link>
               </p>
             </div>
