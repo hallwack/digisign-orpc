@@ -38,13 +38,17 @@ const statusMap = {
     alertClass:
       "bg-green-50 dark:bg-green-950 text-green-900 dark:text-green-50 border-green-200 dark:border-green-900",
     alertTitle: "Dokumen Terverifikasi Asli",
-    alertDescription: "Dokumen ini telah diverifikasi sebagai asli dan valid secara kriptografi.",
   },
   invalid: {
     icon: XIcon,
     alertClass: "bg-red-50 dark:bg-red-950 text-red-900 dark:text-red-50 border-red-200 dark:border-red-900",
     alertTitle: "Peringatan: Dokumen Tidak Valid",
-    alertDescription: "Dokumen ini gagal diverifikasi dan mungkin telah dimodifikasi atau dipalsukan.",
+  },
+  warning: {
+    icon: XIcon,
+    alertClass:
+      "bg-yellow-50 dark:bg-yellow-950 text-yellow-900 dark:text-yellow-50 border-yellow-200 dark:border-yellow-900",
+    alertTitle: "Peringatan: Validitas Dokumen Diragukan",
   },
 };
 
@@ -55,7 +59,7 @@ function VerifyPageComponent() {
         console.log("Document verification result:", data);
         const signerName = data.dataDetails?.userData?.name || "User";
         if (data.isAuthentic) {
-          toast.success(`Dokumen valid! Ditandatangani oleh ${signerName}.`);
+          toast.success(data.message);
         } else {
           toast.error(`Dokumen tidak valid. Ditandatangani oleh ${signerName}.`);
         }
@@ -207,12 +211,13 @@ function VerifyPageComponent() {
                 <div className="animate-in fade-in zoom-in-95 space-y-6 duration-300">
                   {(() => {
                     const status = mutation.data.isAuthentic ? statusMap.valid : statusMap.invalid;
+                    const message = mutation.data.message;
                     const StatusIcon = status.icon;
                     return (
                       <Alert className={cn(status.alertClass)}>
                         <StatusIcon className="h-4 w-4" />
                         <AlertTitle>{status.alertTitle}</AlertTitle>
-                        <AlertDescription>{status.alertDescription}</AlertDescription>
+                        <AlertDescription>{message}</AlertDescription>
                       </Alert>
                     );
                   })()}
