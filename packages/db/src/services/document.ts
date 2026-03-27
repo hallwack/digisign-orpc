@@ -1,4 +1,4 @@
-import { SQL, and, asc, count, desc, eq, gte, ilike, lte } from "drizzle-orm";
+import { SQL, and, asc, count, desc, eq, gte, ilike, isNull, lte } from "drizzle-orm";
 import { existsSync, mkdirSync, rmSync } from "node:fs";
 import { promises as fs } from "node:fs";
 import path from "node:path";
@@ -112,7 +112,7 @@ export class DocumentService {
       const offset = (params.page - 1) * params.perPage;
 
       // Build where conditions
-      const whereConditions = [eq(documentTable.userId, userId)];
+      const whereConditions = [eq(documentTable.userId, userId), isNull(documentTable.deletedAt)];
 
       // Add title filter
       if (params.title) {

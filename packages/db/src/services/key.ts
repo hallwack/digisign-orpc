@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, gte, ilike, lte } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, ilike, isNull, lte } from "drizzle-orm";
 
 import type { KeyDataTableRequestSchema, KeyDataTableResponseSchema, SignatureMetadataSchema } from "@digisign/types";
 
@@ -16,7 +16,7 @@ export class KeyService {
       const offset = (params.page - 1) * params.perPage;
 
       // Build where conditions
-      const whereConditions = [eq(keyTable.userId, userId)];
+      const whereConditions = [eq(keyTable.userId, userId), isNull(keyTable.revokedAt)];
 
       if (params.keyName) {
         whereConditions.push(ilike(keyTable.keyName, `%${params.keyName}%`));
