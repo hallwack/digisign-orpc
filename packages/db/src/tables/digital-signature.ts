@@ -22,6 +22,10 @@ export const documentTable = pgTable("documents", {
   })
     .defaultNow()
     .$onUpdate(() => new Date()),
+  deletedAt: timestamp("deleted_at", {
+    withTimezone: true,
+    mode: "date",
+  }),
 });
 
 export const signatureTable = pgTable("signatures", {
