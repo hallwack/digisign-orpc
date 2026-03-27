@@ -1,5 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import { existsSync, rmSync, stat } from "node:fs";
+import { existsSync, rmSync } from "node:fs";
 import path, { join, resolve } from "node:path";
 
 import type { DocumentFileUploadSchema, DocumentSignSchema } from "@digisign/types";
