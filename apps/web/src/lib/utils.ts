@@ -14,25 +14,37 @@ export function parseSlug(slug: string) {
 }
 
 export function downloadBlob(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
+  if (blob.size === 0) {
+    throw new Error("File yang diterima kosong.");
+  }
 
+  const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
+
   link.href = url;
   link.download = filename;
+  link.style.display = "none";
 
   document.body.appendChild(link);
   link.click();
+
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 }
 
 export function base64ToBlob(base64: string, mimeType: string): Blob {
-  const binary = atob(base64);
-  const bytes = new Uint8Array(binary.length);
+  try {
+    const pureBase64 = base64.includes(",") ? base64.split(",")[1] : base64;
 
-  for (let i = 0; i < binary.length; i++) {
-    bytes[i] = binary.charCodeAt(i);
+    const binary = atob(pureBase64);
+    const bytes = new Uint8Array(binary.length);
+
+    for (let i = 0; i < binary.length; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+
+    return new Blob([bytes], { type: mimeType });
+  } catch (error) {
+    throw new Error(`Gagal mengonversi base64 ke Blob: ${error instanceof Error ? error.message : String(error)}`);
   }
-
-  return new Blob([bytes], { type: mimeType });
 }
