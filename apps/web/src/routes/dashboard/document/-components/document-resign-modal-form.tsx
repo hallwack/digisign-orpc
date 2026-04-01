@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { handleError } from "@/lib/error-handler";
 import { parsePemSections, signEddsa, signRsa } from "@/lib/signer";
 import { base64ToBlob, downloadBlob } from "@/lib/utils";
 import { orpc } from "@/utils/orpc";
@@ -62,36 +63,42 @@ export default function DocumentResignModalForm({ id, onSuccess, ...props }: Doc
       onSubmit: documentKeyUploadSchema,
     },
     onSubmit: async ({ value }) => {
-      if (!documentQuery.data) throw new Error("Dokumen tidak ditemukan");
+      try {
+        if (!documentQuery.data) throw new Error("Dokumen tidak ditemukan");
 
-      const { id: documentId, hash } = documentQuery.data;
-      const privateKeyFile = await value.file.text();
-      const { id: keyId, eddsaKey, rsaKey } = parsePemSections(privateKeyFile);
+        const { id: documentId, hash } = documentQuery.data;
+        const privateKeyFile = await value.file.text();
+        const { id: keyId, eddsaKey, rsaKey } = parsePemSections(privateKeyFile);
 
-      if (!keyId) throw new Error("Key ID tidak ditemukan");
-      if (!rsaKey || !eddsaKey) throw new Error("Key tidak ditemukan");
+        const payload = `${documentId}|${hash}`;
 
-      const startSigningTime = performance.now();
+        if (!keyId) throw new Error("Key ID tidak ditemukan");
+        if (!rsaKey || !eddsaKey) throw new Error("Key tidak ditemukan");
 
-      const startEddsaSigningTime = performance.now();
-      const eddsaSignature = signEddsa(hash, eddsaKey);
-      const endEddsaSigningTime = performance.now();
+        const startSigningTime = performance.now();
 
-      const startRsaSigningTime = performance.now();
-      const rsaSignature = signRsa(hash, rsaKey);
-      const endRsaSigningTime = performance.now();
+        const startEddsaSigningTime = performance.now();
+        const eddsaSignature = signEddsa(payload, eddsaKey);
+        const endEddsaSigningTime = performance.now();
 
-      const endSigningTime = performance.now();
+        const startRsaSigningTime = performance.now();
+        const rsaSignature = signRsa(payload, rsaKey);
+        const endRsaSigningTime = performance.now();
 
-      mutation.mutate({
-        documentId,
-        keyId,
-        rsaPrivateKey: rsaSignature,
-        eddsaPrivateKey: eddsaSignature,
-        signingTime: endSigningTime - startSigningTime,
-        eddsaSigningTime: endEddsaSigningTime - startEddsaSigningTime,
-        rsaSigningTime: endRsaSigningTime - startRsaSigningTime,
-      });
+        const endSigningTime = performance.now();
+
+        mutation.mutate({
+          documentId,
+          keyId,
+          rsaPrivateKey: rsaSignature,
+          eddsaPrivateKey: eddsaSignature,
+          signingTime: endSigningTime - startSigningTime,
+          eddsaSigningTime: endEddsaSigningTime - startEddsaSigningTime,
+          rsaSigningTime: endRsaSigningTime - startRsaSigningTime,
+        });
+      } catch (error) {
+        handleError(error, "Gagal menandatangani ulang dokumen");
+      }
     },
   });
   return (
@@ -152,7 +159,9 @@ export default function DocumentResignModalForm({ id, onSuccess, ...props }: Doc
             />
           </FieldGroup>
 
-          <Button type="submit">Submit</Button>
+          <Button type="submit" disabled={mutation.isPending}>
+            {mutation.isPending ? "Menandatangani..." : "Submit"}
+          </Button>
         </form>
       </DialogContent>
     </Dialog>

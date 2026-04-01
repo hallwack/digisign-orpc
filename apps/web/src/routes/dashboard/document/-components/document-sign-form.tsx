@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { handleError } from "@/lib/error-handler";
 import { parsePemSections, signEddsa, signRsa } from "@/lib/signer";
 import { base64ToBlob, downloadBlob } from "@/lib/utils";
 import { orpc } from "@/utils/orpc";
@@ -22,25 +23,28 @@ export default function DocumentSignForm({ documents }: SignDocumentFormProps) {
   const navigate = useNavigate();
   const mutation = useMutation(
     orpc.document.sign.mutationOptions({
-      onSuccess: (data) => {
-        const fileData = data.fileData;
-        const mimeType = data.mimeType;
-        const fileName = data.fileName;
+      onSuccess: async (data) => {
+        try {
+          const fileData = data.fileData;
+          const mimeType = data.mimeType;
+          const fileName = data.fileName;
 
-        if (!fileData || !mimeType || !fileName) {
-          throw new Error("File tidak ditemukan untuk di-download");
-        } else {
-          const blob = base64ToBlob(fileData, mimeType);
-          downloadBlob(blob, fileName);
+          if (!fileData || !mimeType || !fileName) {
+            const err = new Error("File tidak ditemukan untuk di-download");
+            err.name = "InternalServerError";
+            throw err;
+          } else {
+            const blob = base64ToBlob(fileData, mimeType);
+            downloadBlob(blob, fileName);
+          }
+
+          toast.success("Dokumen berhasil ditandatangani");
+          navigate({ to: "/dashboard/document" });
+        } catch (error) {
+          handleError(error, "Dokumen gagal diproses setelah penandatanganan");
         }
-
-        toast.success("Dokumen berhasil ditandatangani");
-        navigate({ to: "/dashboard/document" });
       },
-      onError: (error) => {
-        console.error("Dokumen gagal ditandatangani", error);
-        toast.error("Dokumen gagal ditandatangani. Silahkan coba lagi.");
-      },
+      onError: (error) => handleError(error, "Dokumen gagal ditandatangani"),
     }),
   );
 
@@ -53,39 +57,43 @@ export default function DocumentSignForm({ documents }: SignDocumentFormProps) {
       onSubmit: documentSignFormSchema,
     },
     onSubmit: async ({ value }) => {
-      const selectedDocument = documents.find((doc) => doc.id === value.documentId);
-      if (!selectedDocument) throw new Error("Dokumen tidak ditemukan");
-      const documentHash = selectedDocument.hash;
+      try {
+        const selectedDocument = documents.find((doc) => doc.id === value.documentId);
+        if (!selectedDocument) throw new Error("Dokumen tidak ditemukan");
+        const documentHash = selectedDocument.hash;
 
-      const privateKeyFile = await value.privateKeyFile.text();
-      const { id: keyId, eddsaKey, rsaKey } = parsePemSections(privateKeyFile);
+        const privateKeyFile = await value.privateKeyFile.text();
+        const { id: keyId, eddsaKey, rsaKey } = parsePemSections(privateKeyFile);
 
-      const payload = `${value.documentId}|${documentHash}`;
+        const payload = `${value.documentId}|${documentHash}`;
 
-      if (!keyId) throw new Error("Key ID tidak ditemukan");
-      if (!rsaKey || !eddsaKey) throw new Error("Key tidak ditemukan");
+        if (!keyId) throw new Error("Key ID tidak ditemukan");
+        if (!rsaKey || !eddsaKey) throw new Error("Key tidak ditemukan");
 
-      const startSigningTime = performance.now();
+        const startSigningTime = performance.now();
 
-      const startEddsaSigningTime = performance.now();
-      const eddsaSignature = signEddsa(payload, eddsaKey);
-      const endEddsaSigningTime = performance.now();
+        const startEddsaSigningTime = performance.now();
+        const eddsaSignature = signEddsa(payload, eddsaKey);
+        const endEddsaSigningTime = performance.now();
 
-      const startRsaSigningTime = performance.now();
-      const rsaSignature = signRsa(payload, rsaKey);
-      const endRsaSigningTime = performance.now();
+        const startRsaSigningTime = performance.now();
+        const rsaSignature = signRsa(payload, rsaKey);
+        const endRsaSigningTime = performance.now();
 
-      const endSigningTime = performance.now();
+        const endSigningTime = performance.now();
 
-      mutation.mutate({
-        documentId: value.documentId,
-        keyId,
-        rsaPrivateKey: rsaSignature,
-        eddsaPrivateKey: eddsaSignature,
-        signingTime: endSigningTime - startSigningTime,
-        eddsaSigningTime: endEddsaSigningTime - startEddsaSigningTime,
-        rsaSigningTime: endRsaSigningTime - startRsaSigningTime,
-      });
+        mutation.mutate({
+          documentId: value.documentId,
+          keyId,
+          rsaPrivateKey: rsaSignature,
+          eddsaPrivateKey: eddsaSignature,
+          signingTime: endSigningTime - startSigningTime,
+          eddsaSigningTime: endEddsaSigningTime - startEddsaSigningTime,
+          rsaSigningTime: endRsaSigningTime - startRsaSigningTime,
+        });
+      } catch (error) {
+        handleError(error, "Gagal memproses tanda tangan dokumen");
+      }
     },
   });
 
@@ -159,7 +167,9 @@ export default function DocumentSignForm({ documents }: SignDocumentFormProps) {
               />
             </FieldGroup>
 
-            <Button type="submit">Submit</Button>
+            <Button type="submit" disabled={mutation.isPending}>
+              {mutation.isPending ? "Menandatangani..." : "Submit"}
+            </Button>
           </form>
         </CardContent>
       </Card>
