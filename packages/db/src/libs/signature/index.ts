@@ -122,20 +122,20 @@ export async function appendSignature(filePath: string, docName: string, metaDat
 }
 
 export function verifyHybridSignature({
-  hashHex,
+  payload,
   rsaSignatureBase64,
   rsaPublicKeyPem,
   eddsaSignatureBase64,
   eddsaPublicKeyPem,
 }: {
-  hashHex: string;
+  payload: string;
   rsaSignatureBase64: string;
   rsaPublicKeyPem: string;
   eddsaSignatureBase64: string;
   eddsaPublicKeyPem: string;
 }) {
   try {
-    const dataToVerify = Buffer.from(hashHex, "hex");
+    const dataToVerify = Buffer.from(payload, "utf8");
 
     const startVerifyingTime = performance.now();
 

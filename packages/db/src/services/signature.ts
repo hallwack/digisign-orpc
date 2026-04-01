@@ -24,8 +24,10 @@ export class SignatureService {
     });
     if (!publicKeyRecord) throw new NotFoundError("Public key not found");
 
+    const payload = `${document.id}|${document.hash}`;
+
     const verification = verifyHybridSignature({
-      hashHex: document.hash,
+      payload,
       rsaSignatureBase64: form.rsaPrivateKey,
       rsaPublicKeyPem: publicKeyRecord.publicKeyRsa,
       eddsaSignatureBase64: form.eddsaPrivateKey,
@@ -127,9 +129,10 @@ export class SignatureService {
     }
 
     const { user: userData, key: keyData, document: documentData, signature: signatureData } = result;
+    const payloadCurrent = `${fileSignatureData.documentId}|${extractedMetadata.currentPhysicalHash}`;
 
     const cryptoVerification = verifyHybridSignature({
-      hashHex: extractedMetadata.currentPhysicalHash,
+      payload: payloadCurrent,
       rsaSignatureBase64: fileSignatureData.rsaSignature,
       rsaPublicKeyPem: keyData.publicKeyRsa,
       eddsaSignatureBase64: fileSignatureData.eddsaSignature,
