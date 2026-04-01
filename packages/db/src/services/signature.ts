@@ -23,6 +23,7 @@ export class SignatureService {
       where: (keyTable, { eq }) => eq(keyTable.id, form.keyId),
     });
     if (!publicKeyRecord) throw new NotFoundError("Public key not found");
+    if (publicKeyRecord.revokedAt !== null) throw new ValidationError("Public key has been revoked");
 
     const payload = `${document.id}|${document.hash}`;
 
