@@ -60,17 +60,19 @@ export default function DocumentSignForm({ documents }: SignDocumentFormProps) {
       const privateKeyFile = await value.privateKeyFile.text();
       const { id: keyId, eddsaKey, rsaKey } = parsePemSections(privateKeyFile);
 
+      const payload = `${value.documentId}|${documentHash}`;
+
       if (!keyId) throw new Error("Key ID tidak ditemukan");
       if (!rsaKey || !eddsaKey) throw new Error("Key tidak ditemukan");
 
       const startSigningTime = performance.now();
 
       const startEddsaSigningTime = performance.now();
-      const eddsaSignature = signEddsa(documentHash, eddsaKey);
+      const eddsaSignature = signEddsa(payload, eddsaKey);
       const endEddsaSigningTime = performance.now();
 
       const startRsaSigningTime = performance.now();
-      const rsaSignature = signRsa(documentHash, rsaKey);
+      const rsaSignature = signRsa(payload, rsaKey);
       const endRsaSigningTime = performance.now();
 
       const endSigningTime = performance.now();

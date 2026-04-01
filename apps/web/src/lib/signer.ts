@@ -35,15 +35,15 @@ export function parsePemSections(pem: string): PemResultSchema {
   return result;
 }
 
-export function signRsa(hashHex: string, privateKeyPem: string): string {
+export function signRsa(payload: string, privateKeyPem: string): string {
   // 1. Change PEM into private key object
   const privateKey = forge.pki.privateKeyFromPem(privateKeyPem);
 
   // 2. Create a SHA-256 message digest from the hash (which is already a hex string)
   const md = forge.md.sha256.create();
 
-  // 3. Update the message digest with the hash bytes
-  md.update(forge.util.hexToBytes(hashHex));
+  // 3. Update the message digest with the utf8 string directly!
+  md.update(payload, "utf8");
 
   // 4. Sign the message digest using the RSA private key
   const signatureBytes = privateKey.sign(md);
@@ -67,12 +67,12 @@ function getEd25519PrivateKeyFromPem(pem: string): Uint8Array {
   return rawBytes.slice(-32);
 }
 
-export function signEddsa(hashHex: string, privateKeyPem: string): string {
+export function signEddsa(payload: string, privateKeyPem: string): string {
   // 1. Extract the raw Ed25519 private key bytes from the PEM
   const privateKeyBytes = getEd25519PrivateKeyFromPem(privateKeyPem);
 
-  // 2. Convert the hash hex string to a Uint8Array
-  const messageHashBytes = Uint8Array.from(hashHex.match(/.{1,2}/g)?.map((byte) => parseInt(byte, 16)) || []);
+  // 2. Convert the payload string to a Uint8Array (message hash) using UTF-8 encoding
+  const messageHashBytes = new TextEncoder().encode(payload)
 
   // 3. Sign the message hash using the Ed25519 private key
   const signatureUint8Array = ed25519.sign(messageHashBytes, privateKeyBytes);
