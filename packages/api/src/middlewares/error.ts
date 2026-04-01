@@ -16,27 +16,42 @@ export const errorHandlerMiddleware = os.middleware(async ({ next }) => {
 
     if (error instanceof NotFoundError)
       throw new ORPCError("NOT_FOUND", {
-        message: error.message,
+        message: error.name,
+        data: {
+          description: error.message,
+        },
       });
 
     if (error instanceof UnauthorizedError)
       throw new ORPCError("UNAUTHORIZED", {
-        message: error.message,
+        message: error.name,
+        data: {
+          description: error.message,
+        },
       });
 
     if (error instanceof ValidationError)
       throw new ORPCError("BAD_REQUEST", {
-        message: error.message,
+        message: error.name,
+        data: {
+          description: error.message,
+        },
       });
 
     if (error instanceof InternalError)
       throw new ORPCError("INTERNAL_SERVER_ERROR", {
-        message: error.message,
+        message: error.name,
+        data: {
+          description: error.message,
+        },
       });
 
     if (error instanceof DrizzleError)
       throw new ORPCError("INTERNAL_SERVER_ERROR", {
         message: "Database error occurred",
+        data: {
+          description: error.message,
+        },
       });
 
     throw new ORPCError("INTERNAL_SERVER_ERROR", {
