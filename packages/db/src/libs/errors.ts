@@ -1,41 +1,14 @@
-export class NotFoundError extends Error {
+class BaseError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = "NotFoundError";
+    this.name = this.constructor.name;
+    Object.setPrototypeOf(this, new.target.prototype);
   }
 }
 
-export class UnauthorizedError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "UnauthorizedError";
-  }
-}
-
-export class ValidationError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "ValidationError";
-  }
-}
-
-export class DrizzleError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "DrizzleError";
-  }
-}
-
-export class InternalError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "InternalError";
-  }
-}
-
-export class InternalServerError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = "InternalServerError";
-  }
-}
+export class NotFoundError extends BaseError {}
+export class UnauthorizedError extends BaseError {}
+export class ValidationError extends BaseError {}
+export class DrizzleError extends BaseError {}
+export class InternalError extends BaseError {}
+export class InternalServerError extends BaseError {}
