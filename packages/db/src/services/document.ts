@@ -243,7 +243,8 @@ export class DocumentService {
           with: { key: true },
         },
       },
-      where: (documentTable, { eq }) => eq(documentTable.id, documentId),
+      where: (documentTable, { eq, and, isNull }) =>
+        and(eq(documentTable.id, documentId), isNull(documentTable.deletedAt)),
     });
     if (!documentData) throw new NotFoundError("Document not found");
 
@@ -292,7 +293,8 @@ export class DocumentService {
         title: true,
         hash: true,
       },
-      where: (documentTable, { eq }) => eq(documentTable.userId, userId),
+      where: (documentTable, { eq, and, isNull }) =>
+        and(eq(documentTable.userId, userId), isNull(documentTable.deletedAt)),
     });
 
     return documents;
