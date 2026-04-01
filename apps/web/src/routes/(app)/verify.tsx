@@ -77,7 +77,7 @@ function VerifyPageComponent() {
     validators: {
       onSubmit: documentFileUploadSchema,
     },
-    onSubmit: async ({ value }) => {
+    onSubmit: ({ value }) => {
       mutation.mutate(value);
     },
   });
