@@ -5,7 +5,7 @@ import DocumentDataTable from "./-components/document-datatable";
 export const Route = createFileRoute("/dashboard/document/")({
   component: DashboardDocumentIndexPageComponent,
   staticData: {
-    breadcrumb: { label: "Dokumen" },
+    breadcrumb: { label: "Datalist" },
   },
   head: () => ({
     meta: [
