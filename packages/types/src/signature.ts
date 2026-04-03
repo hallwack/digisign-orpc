@@ -50,6 +50,7 @@ export const documentVerificationResultSchema = z.object({
   hasSignature: z.boolean(),
   signatureData: signatureMetadataSchema.optional(),
   currentPhysicalHash: z.string(),
+  fileSize: z.string(),
 });
 
 export const pemResultSchema = z.object({
