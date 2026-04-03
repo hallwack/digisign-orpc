@@ -3,6 +3,7 @@ import path from "node:path";
 
 import type { DocumentVerificationResultSchema, SignatureMetadataSchema } from "@digisign/types";
 
+import { formatBytes } from "../document";
 import { InternalError, ValidationError } from "../errors";
 import { SUPPORTED_EXTENSIONS } from "./constant";
 import { OfficeSignature } from "./office";
@@ -59,6 +60,7 @@ export async function verifyDocumentSignature(file: File): Promise<DocumentVerif
 
     return {
       fileType: extension,
+      fileSize: formatBytes(file.size),
       metadata,
       hasSignature,
       signatureData,

@@ -1,5 +1,5 @@
 import { promises as fs } from "node:fs";
-import { join, resolve } from "node:path";
+import { join, parse, resolve } from "node:path";
 
 import { InternalError } from "./errors";
 import { convertToSlug } from "./slug";
@@ -15,7 +15,7 @@ export async function getDocumentHash(file: File): Promise<string> {
   return hashHex;
 }
 
-function formatBytes(bytes: number, decimals = 2): string {
+export function formatBytes(bytes: number, decimals = 2): string {
   if (bytes === 0) return "0 Bytes";
 
   const k = 1024;
@@ -27,10 +27,14 @@ function formatBytes(bytes: number, decimals = 2): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
 }
 
-export async function getHumanReadableFileSize(title: string, dirName: string, fileName: string) {
+export async function getHumanReadableFileSize(title: string, dirName: string, fileName: string, signed = false) {
   const storagePath = resolve(process.cwd(), "../../storage/documents");
   const dirNameSlug = `${convertToSlug(title)}-${dirName}`.toLowerCase();
-  const targetFile = join(storagePath, dirNameSlug, fileName);
+
+  const { name, ext } = parse(fileName);
+  const resolvedFileName = signed ? `${name}-signed${ext}` : fileName;
+
+  const targetFile = join(storagePath, dirNameSlug, resolvedFileName);
 
   try {
     const stats = await fs.stat(targetFile);
