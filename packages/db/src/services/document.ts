@@ -249,8 +249,9 @@ export class DocumentService {
     if (!documentData) throw new NotFoundError("Document not found");
 
     const fileSize = await getHumanReadableFileSize(documentData.title, documentData.id, documentData.fileName);
+    const fileSizeSigned = await getHumanReadableFileSize(documentData.title, documentData.id, documentData.fileName, true);
 
-    return { ...documentData, fileSize };
+    return { ...documentData, fileSize, fileSizeSigned };
   }
 
   static async deleteDocumentById(id: string) {
