@@ -92,6 +92,7 @@ function VerifyPageComponent() {
   const userData = dataDetails?.userData;
   const signatureData = dataDetails?.signatureData;
   const documentData = dataDetails?.documentData;
+  const fileSizeData = responseData?.extractedMetadata.fileSize;
 
   return (
     <main className="mx-auto min-h-screen max-w-300 px-4 py-8 sm:px-6">
@@ -244,6 +245,9 @@ function VerifyPageComponent() {
 
                             <span className="text-muted-foreground">Nama File</span>
                             <span className="col-span-2">{documentData?.fileName || "N/A"}</span>
+
+                            <span className="text-muted-foreground">Ukuran File</span>
+                            <span className="col-span-2">{fileSizeData || "N/A"}</span>
 
                             <span className="text-muted-foreground">Title</span>
                             <span className="col-span-2">{documentData?.title || "N/A"}</span>

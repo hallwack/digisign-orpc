@@ -153,6 +153,13 @@ export default function DocumentDetail({ detail }: { detail: DocumentDetailRespo
                   <span className="text-foreground text-sm">{detail.fileSize}</span>
                 </div>
 
+                {detail.signature !== null && (
+                  <div className="flex flex-col gap-1">
+                    <span className="text-muted-foreground">Ukuran File Setelah Ditandatangani</span>
+                    <span className="text-foreground text-sm">{detail.fileSizeSigned}</span>
+                  </div>
+                )}
+
                 <div className="flex flex-col gap-1">
                   <span className="text-muted-foreground">Dibuat Pada</span>
                   <span className="text-foreground text-sm">{formatDateSpecific(detail.createdAt ?? "")}</span>
