@@ -7,9 +7,9 @@ import { Builder, parseStringPromise } from "xml2js";
 import type { SignatureMetadataSchema } from "@digisign/types";
 
 import { getDocument, separateFilenameWithExt } from "../document";
+import { InternalError } from "../errors";
 import { decodeMetadataStreamToXml } from "./pdf-decoder";
 import { createSignedFileName } from "./utils";
-import { InternalError } from "../errors";
 
 export const PdfSignature = {
   async extractMetadata(fileBuffer: Buffer): Promise<Record<string, string> | null> {
@@ -131,7 +131,9 @@ export const PdfSignature = {
 
       return builder.buildObject(xmlTemplate);
     } catch (error) {
-      throw new InternalError(`Failed to generate PDF metadata: ${error instanceof Error ? error.message : "Unknown error"}`);
+      throw new InternalError(
+        `Failed to generate PDF metadata: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
     }
   },
 
