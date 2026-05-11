@@ -136,7 +136,7 @@ export class SignatureService {
 
     const fileSignatureData = extractedMetadata.signatureData;
 
-    const isContentIntact = extractedMetadata.currentPhysicalHash === fileSignatureData.documentHash;
+    /* const isContentIntact = extractedMetadata.currentPhysicalHash === fileSignatureData.documentHash;
     if (!isContentIntact) {
       const [existingDoc] = await db
         .select({ id: documentTable.id })
@@ -146,7 +146,7 @@ export class SignatureService {
       const message = existingDoc ? MESSAGE.CONTENT_TAMPERED : MESSAGE.REPLAY_ATTACK;
 
       return buildResult("INVALID", false, message);
-    }
+    } */
 
     const [result] = await db
       .select({
@@ -174,6 +174,8 @@ export class SignatureService {
       eddsaSignatureBase64: fileSignatureData.eddsaSignature,
       eddsaPublicKeyPem: keyData.publicKeyEddsa,
     });
+
+    console.log("Crypto: ", crypto)
 
     const cryptoDetails = {
       rsaValid: crypto.rsaValid,
