@@ -136,18 +136,6 @@ export class SignatureService {
 
     const fileSignatureData = extractedMetadata.signatureData;
 
-    /* const isContentIntact = extractedMetadata.currentPhysicalHash === fileSignatureData.documentHash;
-    if (!isContentIntact) {
-      const [existingDoc] = await db
-        .select({ id: documentTable.id })
-        .from(documentTable)
-        .where(eq(documentTable.id, fileSignatureData.documentId));
-
-      const message = existingDoc ? MESSAGE.CONTENT_TAMPERED : MESSAGE.REPLAY_ATTACK;
-
-      return buildResult("INVALID", false, message);
-    } */
-
     const [result] = await db
       .select({
         signature: signatureTable,
@@ -165,6 +153,13 @@ export class SignatureService {
 
     const { user: userData, key: keyData, document: documentData, signature: signatureData } = result;
 
+    const isContentIntact = extractedMetadata.currentPhysicalHash === documentData.hash;
+    if (!isContentIntact) {
+      const message = MESSAGE.REPLAY_ATTACK;
+
+      return buildResult("INVALID", false, message);
+    }
+
     const payloadCurrent = `${fileSignatureData.documentId}|${extractedMetadata.currentPhysicalHash}`;
 
     const crypto = verifyHybridSignature({
@@ -174,8 +169,6 @@ export class SignatureService {
       eddsaSignatureBase64: fileSignatureData.eddsaSignature,
       eddsaPublicKeyPem: keyData.publicKeyEddsa,
     });
-
-    console.log("Crypto: ", crypto)
 
     const cryptoDetails = {
       rsaValid: crypto.rsaValid,
