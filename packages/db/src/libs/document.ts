@@ -40,7 +40,7 @@ export async function getHumanReadableFileSize(title: string, dirName: string, f
     const stats = await fs.stat(targetFile);
     return formatBytes(stats.size);
   } catch (error) {
-    throw new InternalError(`Failed to get file size: ${error instanceof Error ? error.message : "Unknown error"}`);
+    return null;
   }
 }
 

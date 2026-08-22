@@ -12,6 +12,42 @@ import { appendSignature, verifyDocumentSignature, verifyHybridSignature } from 
 import { convertToSlug } from "../libs/slug";
 import { documentTable, keyTable, signatureTable, userTable } from "../tables";
 
+type VerificationStatus = "VALID" | "INVALID" | "WARNING";
+
+const MESSAGE = {
+  // F-03: Metadata signature tidak ditemukan
+  NO_SIGNATURE: "INVALID: Tidak ditemukan metadata tanda tangan digital yang valid pada dokumen ini.",
+
+  // F-05: Replay attack — documentId tidak dikenal di database
+  REPLAY_ATTACK: "INVALID: Terdeteksi kemungkinan replay attack. Metadata tanda tangan tidak berasal dari dokumen ini.",
+
+  // F-02: Konten dokumen dimanipulasi setelah signing
+  CONTENT_TAMPERED:
+    "INVALID: Integritas dokumen terkompromi. Isi dokumen telah dimodifikasi atau diubah setelah ditandatangani.",
+
+  // F-04: keyId atau documentId tidak ditemukan di database
+  NOT_FOUND: "INVALID: Data tanda tangan, pengguna, atau dokumen tidak ditemukan di dalam sistem database.",
+
+  // F-04b: Signature dipalsukan — RSA/EdDSA gagal verifikasi kriptografi
+  CRYPTO_FAILED: (rsaValid: boolean, eddsaValid: boolean) =>
+    `INVALID: Gagal pada validasi kriptografi. RSA Valid: ${rsaValid}. EdDSA Valid: ${eddsaValid}.`,
+
+  // F-01: Dokumen valid
+  VALID: "VALID: Dokumen utuh dan tanda tangan kriptografi terverifikasi.",
+
+  // F-06: Kunci dicabut, dokumen ditandatangani SEBELUM revocation
+  KEY_REVOKED_HISTORICAL:
+    "WARNING: Dokumen ini sah karena ditandatangani pada saat kunci masih aktif. Catatan: Kunci publik ini sekarang telah dicabut (Revoked) oleh pemiliknya.",
+
+  // F-07: Kunci dicabut, dokumen ditandatangani SETELAH revocation
+  KEY_REVOKED_ILLEGAL:
+    "INVALID: Secara kriptografi valid, namun dokumen ini ditandatangani SETELAH kunci publik pemiliknya dicabut (Revoked). Ini mengindikasikan penyalahgunaan kunci.",
+
+  // Dokumen dihapus dari sistem (append ke pesan utama)
+  DOC_ARCHIVED:
+    " (Catatan Sistem: Salinan dokumen ini telah diarsipkan/dihapus dari antarmuka utama oleh pihak penandatangan, namun validitas hukum dan tanda tangannya tetap berlaku penuh).",
+} as const;
+
 export class SignatureService {
   static async signDocument(form: DocumentSignSchema) {
     const document = await db.query.documentTable.findFirst({
@@ -78,35 +114,27 @@ export class SignatureService {
   static async verifyDocument(form: DocumentFileUploadSchema) {
     const extractedMetadata = await verifyDocumentSignature(form.file);
 
-    const defaultReturn = {
-      status: "INVALID", // VALID, INVALID, WARNING
-      isAuthentic: false,
-      message: "",
+    const buildResult = (
+      status: VerificationStatus,
+      isAuthentic: boolean,
+      message: string,
+      details: {
+        dataDetails?: any;
+        cryptoDetails?: any;
+      } = {},
+    ) => ({
+      status,
+      isAuthentic,
+      message,
       extractedMetadata,
-      dataDetails: null,
-      cryptoDetails: null,
-    };
+      dataDetails: details.dataDetails ?? null,
+      cryptoDetails: details.cryptoDetails ?? null,
+    });
 
-    if (!extractedMetadata.hasSignature || !extractedMetadata.signatureData) {
-      return {
-        ...defaultReturn,
-        status: "INVALID",
-        message: "Peringatan: Tidak ditemukan metadata tanda tangan digital yang valid pada dokumen ini.",
-      };
-    }
+    if (!extractedMetadata.hasSignature || !extractedMetadata.signatureData)
+      return buildResult("INVALID", false, MESSAGE.NO_SIGNATURE);
 
     const fileSignatureData = extractedMetadata.signatureData;
-
-    const isContentIntact = extractedMetadata.currentPhysicalHash === fileSignatureData.documentHash;
-    if (!isContentIntact) {
-      return {
-        ...defaultReturn,
-        // PERBAIKAN PESAN BUG:
-        status: "INVALID",
-        message:
-          "Peringatan: Integritas dokumen terkompromi. Isi dokumen telah dimodifikasi atau diubah setelah ditandatangani.",
-      };
-    }
 
     const [result] = await db
       .select({
@@ -121,18 +149,20 @@ export class SignatureService {
       .innerJoin(documentTable, eq(signatureTable.documentId, documentTable.id))
       .where(and(eq(keyTable.id, fileSignatureData.keyId), eq(documentTable.id, fileSignatureData.documentId)));
 
-    if (!result) {
-      return {
-        ...defaultReturn,
-        status: "INVALID",
-        message: "Data tanda tangan, pengguna, atau dokumen tidak ditemukan di dalam sistem database.",
-      };
-    }
+    if (!result) return buildResult("INVALID", false, MESSAGE.NOT_FOUND);
 
     const { user: userData, key: keyData, document: documentData, signature: signatureData } = result;
+
+    const isContentIntact = extractedMetadata.currentPhysicalHash === documentData.hash;
+    if (!isContentIntact) {
+      const message = MESSAGE.REPLAY_ATTACK;
+
+      return buildResult("INVALID", false, message);
+    }
+
     const payloadCurrent = `${fileSignatureData.documentId}|${extractedMetadata.currentPhysicalHash}`;
 
-    const cryptoVerification = verifyHybridSignature({
+    const crypto = verifyHybridSignature({
       payload: payloadCurrent,
       rsaSignatureBase64: fileSignatureData.rsaSignature,
       rsaPublicKeyPem: keyData.publicKeyRsa,
@@ -140,59 +170,47 @@ export class SignatureService {
       eddsaPublicKeyPem: keyData.publicKeyEddsa,
     });
 
-    let finalIsAuthentic = cryptoVerification.isAuthentic;
-    let finalMessage = "Status: VALID. Dokumen utuh dan tanda tangan kriptografi terverifikasi.";
-    let finalStatus = "VALID";
+    const cryptoDetails = {
+      rsaValid: crypto.rsaValid,
+      eddsaValid: crypto.eddsaValid,
+      totalVerificationTimeMs: crypto.totalVerificationTime,
+      rsaVerificationTimeMs: crypto.rsaVerificationTime,
+      eddsaVerificationTimeMs: crypto.eddsaVerificationTime,
+    };
 
-    // 5. PENGECEKAN VALIDITAS HISTORIS (KUNCI DICABUT)
-    if (finalIsAuthentic && keyData.revokedAt !== null) {
-      // Menggunakan .getTime() agar komparasi tanggal lebih akurat di TypeScript/NodeJS
+    const dataDetails = {
+      userData,
+      keyData,
+      documentData,
+      signatureData,
+    };
+
+    if (!crypto.isAuthentic)
+      return buildResult("INVALID", false, MESSAGE.CRYPTO_FAILED(crypto.rsaValid, crypto.eddsaValid), {
+        dataDetails,
+        cryptoDetails,
+      });
+
+    if (keyData.revokedAt !== null) {
       const signedTime = signatureData.signedAt ? new Date(signatureData.signedAt).getTime() : 0;
       const revokedTime = new Date(keyData.revokedAt).getTime();
 
-      if (signedTime > revokedTime) {
-        // SKENARIO ILEGAL: Ditandatangani SETELAH kunci mati
-        finalIsAuthentic = false;
-        finalStatus = "INVALID";
-        finalMessage =
-          "Status: TIDAK SAH. Secara kriptografi valid, namun dokumen ini ditandatangani SETELAH kunci publik pemiliknya dicabut (Revoked). Ini mengindikasikan penyalahgunaan kunci.";
-      } else {
-        // SKENARIO SAH: Ditandatangani SEBELUM kunci mati (Validitas Historis)
-        finalStatus = "WARNING";
-        finalMessage =
-          "Status: VALID (Dengan Catatan). Dokumen ini sah karena ditandatangani pada saat kunci masih aktif. Catatan: Kunci publik ini sekarang telah dicabut (Revoked) oleh pemiliknya.";
-      }
-    } else if (!finalIsAuthentic) {
-      finalStatus = "INVALID";
-      finalMessage = `Status: TIDAK SAH. Gagal pada validasi kriptografi. RSA Valid: ${cryptoVerification.rsaValid}. EdDSA Valid: ${cryptoVerification.eddsaValid}`;
+      if (signedTime > revokedTime)
+        return buildResult("INVALID", false, MESSAGE.KEY_REVOKED_ILLEGAL, { dataDetails, cryptoDetails });
+
+      return buildResult("WARNING", true, MESSAGE.KEY_REVOKED_HISTORICAL, { dataDetails, cryptoDetails });
     }
 
-    if (finalIsAuthentic && documentData.deletedAt !== null) {
-      // Kita HANYA menambahkan (append) pesan tambahan, TANPA mengubah finalIsAuthentic.
-      finalStatus = finalStatus === "VALID" ? "WARNING" : finalStatus; // Jika sudah INVALID, tetap INVALID. Jika VALID, naikkan ke WARNING.
-      finalMessage +=
-        " (Catatan Sistem: Salinan dokumen ini telah diarsipkan/dihapus dari antarmuka utama oleh pihak penandatangan, namun validitas hukum dan tanda tangannya tetap berlaku penuh).";
-    }
+    const isArchived = documentData.deletedAt !== null;
 
-    return {
-      status: finalStatus,
-      isAuthentic: finalIsAuthentic,
-      message: finalMessage,
-      extractedMetadata,
-      dataDetails: {
-        userData,
-        keyData,
-        documentData,
-        signatureData,
-      },
-      cryptoDetails: {
-        rsaValid: cryptoVerification.rsaValid,
-        eddsaValid: cryptoVerification.eddsaValid,
-        totalVerificationTimeMs: cryptoVerification.totalVerificationTime,
-        rsaVerificationTimeMs: cryptoVerification.rsaVerificationTime,
-        eddsaVerificationTimeMs: cryptoVerification.eddsaVerificationTime,
-      },
-    };
+    const finalMessage = isArchived ? MESSAGE.VALID + MESSAGE.DOC_ARCHIVED : MESSAGE.VALID;
+
+    const finalStatus: VerificationStatus = isArchived ? "WARNING" : "VALID";
+
+    return buildResult(finalStatus, true, finalMessage, {
+      dataDetails,
+      cryptoDetails,
+    });
   }
 
   static async resignDocument(form: DocumentSignSchema, userId: string) {

@@ -1,5 +1,5 @@
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
+// import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+// import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
 
 import { ThemeProvider } from "@/components/theme-provider";
@@ -18,8 +18,8 @@ export default function RootProvider({ children }: { children: React.ReactNode }
           </ThemeProvider>
         </NuqsAdapter>
       </ReactQueryClientProvider>
-      <TanStackRouterDevtools position="bottom-left" />
-      <ReactQueryDevtools position="bottom" buttonPosition="bottom-right" />
+      {/* <TanStackRouterDevtools position="bottom-left" />
+      <ReactQueryDevtools position="bottom" buttonPosition="bottom-right" /> */}
     </>
   );
 }
