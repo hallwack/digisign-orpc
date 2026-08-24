@@ -67,6 +67,22 @@ export const keyTable = pgTable("keys", {
   }),
 });
 
+export const keyEncryptionMaterialTable = pgTable("key_encryption_material", {
+  keyId: text("key_id")
+    .primaryKey()
+    .references(() => keyTable.id, { onDelete: "cascade" }),
+  encryptedPrivateKeyRsa: text("encrypted_private_key_rsa").notNull(),
+  privateKeyRsaNonce: text("private_key_rsa_nonce").notNull(),
+  privateKeyRsaAuthTag: text("private_key_rsa_auth_tag").notNull(),
+  encryptedPrivateKeyEddsa: text("encrypted_private_key_eddsa").notNull(),
+  privateKeyEddsaNonce: text("private_key_eddsa_nonce").notNull(),
+  privateKeyEddsaAuthTag: text("private_key_eddsa_auth_tag").notNull(),
+  kdfSalt: text("kdf_salt").notNull(),
+  kdfMemoryCost: real("kdf_memory_cost").notNull(),
+  kdfTimeCost: real("kdf_time_cost").notNull(),
+  kdfParallelism: real("kdf_parallelism").notNull(),
+});
+
 export const keyTableRelations = relations(keyTable, ({ one }) => ({
   signature: one(signatureTable, {
     fields: [keyTable.id],
@@ -75,6 +91,17 @@ export const keyTableRelations = relations(keyTable, ({ one }) => ({
   user: one(userTable, {
     fields: [keyTable.userId],
     references: [userTable.id],
+  }),
+  encryptionMaterial: one(keyEncryptionMaterialTable, {
+    fields: [keyTable.id],
+    references: [keyEncryptionMaterialTable.keyId],
+  }),
+}));
+
+export const keyEncryptionMaterialTableRelations = relations(keyEncryptionMaterialTable, ({ one }) => ({
+  key: one(keyTable, {
+    fields: [keyEncryptionMaterialTable.keyId],
+    references: [keyTable.id],
   }),
 }));
 
