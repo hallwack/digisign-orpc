@@ -5,29 +5,18 @@ import { toast } from "sonner";
 
 import { keyInsertSchema } from "@digisign/types";
 
+import { PasswordInput } from "@/components/password-input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { base64ToBlob, downloadBlob } from "@/lib/utils";
 import { orpc } from "@/utils/orpc";
 
 export default function KeyCreateForm() {
   const navigate = useNavigate();
   const mutation = useMutation(
     orpc.key.create.mutationOptions({
-      onSuccess: (data) => {
-        const fileData = data.fileData;
-        const mimeType = data.mimeType;
-        const fileName = data.fileName;
-
-        if (!fileData || !mimeType || !fileName) {
-          throw new Error("File tidak ditemukan untuk di-download");
-        } else {
-          const blob = base64ToBlob(fileData, mimeType);
-          downloadBlob(blob, fileName);
-        }
-
+      onSuccess: () => {
         toast.success("Key berhasil dibuat.");
         navigate({ to: "/dashboard/key" });
       },
@@ -41,6 +30,7 @@ export default function KeyCreateForm() {
   const form = useForm({
     defaultValues: {
       keyName: "",
+      passphrase: "",
     },
     validators: {
       onSubmit: keyInsertSchema,
@@ -78,6 +68,30 @@ export default function KeyCreateForm() {
                           onChange={(e) => field.handleChange(e.target.value)}
                           aria-invalid={isInvalid}
                           placeholder="Contoh: Key Signing Saya"
+                        />
+                        {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                      </Field>
+                    );
+                  }}
+                />
+              </FieldSet>
+
+              <FieldSet>
+                <form.Field
+                  name="passphrase"
+                  children={(field) => {
+                    const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+                    return (
+                      <Field data-invalid={isInvalid}>
+                        <FieldLabel htmlFor={field.name}>Passphrase/Password</FieldLabel>
+                        <PasswordInput
+                          id={field.name}
+                          name={field.name}
+                          value={field.state.value}
+                          onBlur={field.handleBlur}
+                          onChange={(e) => field.handleChange(e.target.value)}
+                          aria-invalid={isInvalid}
+                          placeholder="Masukkan passphrase/password untuk key ini"
                         />
                         {isInvalid && <FieldError errors={field.state.meta.errors} />}
                       </Field>
