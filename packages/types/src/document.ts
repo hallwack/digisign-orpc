@@ -1,5 +1,6 @@
 import z from "zod";
 
+import { passphraseSchema } from "./key";
 import { signatureSchema } from "./signature";
 import { userSchema } from "./user";
 import { createPaginationSchema, dateQuerySchema, documentFileSchema, documentKeySchema, idSchema } from "./utils";
@@ -62,6 +63,12 @@ export const documentSignFormSchema = z.object({
   privateKeyFile: documentKeySchema,
 });
 
+export const documentSignWithPassphraseFormSchema = z.object({
+  documentId: idSchema,
+  keyId: idSchema,
+  passphrase: passphraseSchema,
+});
+
 export const documentFileUploadSchema = z.object({
   file: documentFileSchema,
 });
@@ -121,6 +128,7 @@ export type DocumentDetailResponseSchema = z.infer<typeof documentDetailResponse
 export type DocumentSignResponseSchema = z.infer<typeof documentSignResponseSchema>;
 export type DocumentSignSchema = z.infer<typeof documentSignSchema>;
 export type DocumentSignFormSchema = z.infer<typeof documentSignFormSchema>;
+export type DocumentSignWithPassphraseFormSchema = z.infer<typeof documentSignWithPassphraseFormSchema>;
 export type DocumentUploadSchema = z.infer<typeof documentUploadSchema>;
 export type DocumentFileUploadSchema = z.infer<typeof documentFileUploadSchema>;
 export type GetAllDocumentResponseSchema = z.infer<typeof getAllDocumentResponseSchema>;

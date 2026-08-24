@@ -2,6 +2,11 @@ import { z } from "zod";
 
 import { createPaginationSchema, dateQuerySchema, idSchema } from "./utils";
 
+export const passphraseSchema = z
+  .string()
+  .min(12, "Passphrase must be at least 12 characters long")
+  .max(128, "Passphrase must be at most 128 characters long");
+
 export const keySchema = z.object({
   id: idSchema,
   userId: idSchema,
@@ -21,13 +26,21 @@ export const keyDataTableRequestSchema = createPaginationSchema(keySortFields).e
   revokedAt: dateQuerySchema,
 });
 
-export const keyInsertSchema = keySchema.pick({
-  keyName: true,
-});
+export const keyInsertSchema = keySchema
+  .pick({
+    keyName: true,
+  })
+  .extend({
+    passphrase: passphraseSchema,
+  });
 
-export const keyRegenerateSchema = keySchema.pick({
-  id: true,
-});
+export const keyRegenerateSchema = keySchema
+  .pick({
+    id: true,
+  })
+  .extend({
+    passphrase: passphraseSchema,
+  });
 
 // --- Response Schema ---
 export const keyTableItemSchema = keySchema;
@@ -40,14 +53,20 @@ export const keyDataTableResponseSchema = z.object({
   perPage: z.number(),
 });
 
-export const createKeySchema = keySchema.pick({
-  keyName: true,
-});
+export const createKeySchema = keySchema
+  .pick({
+    keyName: true,
+  })
+  .extend({
+    passphrase: passphraseSchema,
+  });
 
 export const createKeyResponseSchema = z.object({
-  fileData: z.string().describe("Base64 encoded PEM file content"),
-  fileName: z.string().describe("Suggested filename for download"),
-  mimeType: z.string().describe("MIME type of the file").default("application/x-pem-file"),
+  id: idSchema,
+  keyName: z.string(),
+  publicKeyRsa: z.string(),
+  publicKeyEddsa: z.string(),
+  createdAt: z.date().nullable(),
 });
 
 export const keyIdSchema = keySchema.pick({
@@ -58,9 +77,18 @@ export const keyIdActionSchema = z.object({
   id: z.string(),
 });
 
+export const getAllKeyResponseSchema = z.array(
+  keySchema.pick({
+    id: true,
+    userId: true,
+    keyName: true,
+  }),
+);
+
 export type KeyTableItemSchema = z.infer<typeof keyTableItemSchema>;
 export type KeyRegenerateSchema = z.infer<typeof keyRegenerateSchema>;
 export type KeyDataTableRequestSchema = z.infer<typeof keyDataTableRequestSchema>;
 export type KeyDataTableResponseSchema = z.infer<typeof keyDataTableResponseSchema>;
 export type CreateKeySchema = z.infer<typeof createKeySchema>;
 export type KeyIdSchema = z.infer<typeof keyIdSchema>;
+export type GetAllKeyResponseSchema = z.infer<typeof getAllKeyResponseSchema>;
