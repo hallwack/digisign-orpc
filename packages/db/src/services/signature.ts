@@ -2,11 +2,17 @@ import { and, eq } from "drizzle-orm";
 import { existsSync, rmSync } from "node:fs";
 import path, { join, resolve } from "node:path";
 
-import type { DocumentFileUploadSchema, DocumentSignSchema } from "@digisign/types";
+import type {
+  DocumentFileUploadSchema,
+  DocumentSignSchema,
+  DocumentSignWithPassphraseFormSchema,
+} from "@digisign/types";
 
 import { db } from "..";
+import { Envelope } from "../libs/crypto-envelope/envelope";
 import { getDocumentByName } from "../libs/document";
 import { InternalError, NotFoundError, ValidationError } from "../libs/errors";
+import { signEddsa, signRsa } from "../libs/key-libs";
 import { generateId } from "../libs/random";
 import { appendSignature, verifyDocumentSignature, verifyHybridSignature } from "../libs/signature";
 import { convertToSlug } from "../libs/slug";
@@ -49,25 +55,81 @@ const MESSAGE = {
 } as const;
 
 export class SignatureService {
-  static async signDocument(form: DocumentSignSchema) {
+  static async signDocument(form: DocumentSignWithPassphraseFormSchema) {
     const document = await db.query.documentTable.findFirst({
       where: (documentTable, { eq }) => eq(documentTable.id, form.documentId),
     });
     if (!document) throw new NotFoundError("Document not found");
 
+    // Get Key
     const publicKeyRecord = await db.query.keyTable.findFirst({
       where: (keyTable, { eq }) => eq(keyTable.id, form.keyId),
+      with: {
+        encryptionMaterial: true,
+      },
     });
     if (!publicKeyRecord) throw new NotFoundError("Public key not found");
     if (publicKeyRecord.revokedAt !== null) throw new ValidationError("Public key has been revoked");
 
+    // Get Private Key
+    const material = publicKeyRecord.encryptionMaterial;
+    const salt = Buffer.from(material.kdfSalt, "base64");
+
+    let kek: Buffer | null = null;
+    let rsaPrivateKey: string | null = null;
+    let eddsaPrivateKey: string | null = null;
+
+    try {
+      kek = await Envelope.deriveKek(form.passphrase, salt, {
+        memoryCost: material.kdfMemoryCost,
+        timeCost: material.kdfTimeCost,
+        parallelism: material.kdfParallelism,
+      });
+
+      rsaPrivateKey = Envelope.decryptWithKek(
+        {
+          ciphertext: material.encryptedPrivateKeyRsa,
+          authTag: material.privateKeyRsaAuthTag,
+          nonce: material.privateKeyRsaNonce,
+        },
+        kek,
+      );
+
+      eddsaPrivateKey = Envelope.decryptWithKek(
+        {
+          ciphertext: material.encryptedPrivateKeyEddsa,
+          authTag: material.privateKeyEddsaAuthTag,
+          nonce: material.privateKeyEddsaNonce,
+        },
+        kek,
+      );
+    } catch (error) {
+      throw new ValidationError("Failed to decrypt private keys. Possibly incorrect passphrase.");
+    } finally {
+      kek?.fill(0);
+    }
+
     const payload = `${document.id}|${document.hash}`;
+
+    // Signing with Private Keys
+
+    const startSigningTime = performance.now();
+
+    const startEddsaSigningTime = performance.now();
+    const eddsaSignature = signEddsa(payload, eddsaPrivateKey);
+    const endEddsaSigningTime = performance.now();
+
+    const startRsaSigningTime = performance.now();
+    const rsaSignature = signRsa(payload, rsaPrivateKey);
+    const endRsaSigningTime = performance.now();
+
+    const endSigningTime = performance.now();
 
     const verification = verifyHybridSignature({
       payload,
-      rsaSignatureBase64: form.rsaPrivateKey,
+      rsaSignatureBase64: rsaSignature,
       rsaPublicKeyPem: publicKeyRecord.publicKeyRsa,
-      eddsaSignatureBase64: form.eddsaPrivateKey,
+      eddsaSignatureBase64: eddsaSignature,
       eddsaPublicKeyPem: publicKeyRecord.publicKeyEddsa,
     });
 
