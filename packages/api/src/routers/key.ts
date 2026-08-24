@@ -1,15 +1,20 @@
 import { KeyService } from "@digisign/db/services/key";
-import {
-  keyDataTableRequestSchema,
-  keyIdActionSchema,
-  keyIdSchema,
-  keyInsertSchema,
-  keyRegenerateSchema,
-} from "@digisign/types";
+import { keyDataTableRequestSchema, keyIdActionSchema, keyInsertSchema, keyRegenerateSchema } from "@digisign/types";
 
 import { protectedProcedure } from "..";
 
 export const keyRouter = {
+  all: protectedProcedure
+    .route({
+      path: "/key",
+      method: "GET",
+      tags: ["Key"],
+      summary: "Get All Keys",
+      description: "Retrieve all keys for the authenticated user",
+    })
+    .handler(async ({ context }) => {
+      return KeyService.getAllKeys(context.session.user.id);
+    }),
   datalist: protectedProcedure
     .route({
       path: "/key/datalist",
@@ -32,7 +37,7 @@ export const keyRouter = {
     })
     .input(keyInsertSchema)
     .handler(async ({ input, context }) => {
-      return KeyService.createKey(input.keyName, context.session.user.id);
+      return KeyService.createKey(input.keyName, context.session.user.id, input.passphrase);
     }),
   regenerate: protectedProcedure
     .route({
