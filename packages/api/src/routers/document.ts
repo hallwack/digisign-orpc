@@ -6,6 +6,7 @@ import {
   documentIdActionSchema,
   documentIdSchema,
   documentSignSchema,
+  documentSignWithPassphraseFormSchema,
   documentUploadSchema,
 } from "@digisign/types";
 
@@ -69,7 +70,7 @@ export const documentRouter = {
       summary: "Sign Document",
       description: "Sign a document by ID",
     })
-    .input(documentSignSchema)
+    .input(documentSignWithPassphraseFormSchema)
     .handler(async ({ input }) => {
       return SignatureService.signDocument(input);
     }),
