@@ -21,7 +21,16 @@ export const Envelope = {
         algorithm: 2,
       });
 
-      return Buffer.isBuffer(derived) ? derived : Buffer.from(derived);
+      const parts = derived.split("$");
+      const hashBase64 = parts[parts.length - 1];
+
+      const kek = Buffer.from(hashBase64!, "base64");
+
+      if (kek.length !== KEY_LENGTH) {
+        throw new Error(`Invalid KEK length extracted: ${kek.length}`);
+      }
+
+      return kek;
     } catch (error) {
       throw new Error(`Failed to derive KEK: ${error instanceof Error ? error.message : String(error)}`);
     }
