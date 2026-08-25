@@ -7,8 +7,8 @@ import { KDF_DEFAULTS, SALT_LENGTH } from "./constant";
 import { Envelope } from "./envelope";
 
 export async function registerKeyPair({ passphrase }: { passphrase: string }): Promise<RegisterKeyPairResult> {
-  if (!passphrase || passphrase.length < 12) {
-    throw new ValidationError("Passphrase must be at least 12 characters long");
+  if (!passphrase || passphrase.length < 8) {
+    throw new ValidationError("Passphrase must be at least 8 characters long");
   }
 
   const { publicKey: publicKeyRsa, privateKey: privateKeyRsa } = crypto.generateKeyPairSync("rsa", {
