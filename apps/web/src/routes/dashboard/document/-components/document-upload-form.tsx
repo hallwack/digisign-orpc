@@ -117,7 +117,7 @@ export default function DocumentUploadForm() {
               <FieldSeparator />
 
               <FieldSet>
-                <FieldLegend>Upload FIle</FieldLegend>
+                <FieldLegend>Upload File</FieldLegend>
                 <FieldDescription>Upload dokumen yang ingin Anda bagikan dan tandatangani.</FieldDescription>
                 <FieldGroup>
                   <form.Field
