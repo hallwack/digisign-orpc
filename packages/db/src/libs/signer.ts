@@ -72,7 +72,7 @@ export function signEddsa(payload: string, privateKeyPem: string): string {
   const privateKeyBytes = getEd25519PrivateKeyFromPem(privateKeyPem);
 
   // 2. Convert the payload string to a Uint8Array (message hash) using UTF-8 encoding
-  const messageHashBytes = new TextEncoder().encode(payload)
+  const messageHashBytes = new TextEncoder().encode(payload);
 
   // 3. Sign the message hash using the Ed25519 private key
   const signatureUint8Array = ed25519.sign(messageHashBytes, privateKeyBytes);
