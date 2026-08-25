@@ -109,15 +109,6 @@ export class KeyService {
       passphrase,
     });
 
-    const key = await db.insert(keyTable).values({
-      id,
-      keyName,
-      publicKeyRsa,
-      publicKeyEddsa,
-      userId,
-    });
-    if (!key) throw new InternalError("Failed to create key");
-
     await db.transaction(async (tx) => {
       await tx.insert(keyTable).values({
         id,
