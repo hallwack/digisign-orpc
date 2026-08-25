@@ -11,18 +11,19 @@ export const Route = createFileRoute("/dashboard/document/sign")({
   },
   loader: async ({ context: { queryClient } }) => {
     const documents = await queryClient.fetchQuery(orpc.document.all.queryOptions());
-    return { documents };
+    const keys = await queryClient.fetchQuery(orpc.key.all.queryOptions());
+    return { documents, keys };
   },
 });
 
 function DashboardDocumentSignPageComponent() {
-  const { documents } = Route.useLoaderData();
+  const { documents, keys } = Route.useLoaderData();
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold tracking-tight">Tandatangan Dokumen</h1>
 
-      <DocumentSignForm documents={documents} />
+      <DocumentSignForm documents={documents} keys={keys} />
     </div>
   );
 }

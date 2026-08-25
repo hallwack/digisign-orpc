@@ -3,12 +3,16 @@ import { useMutation } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 
-import { type GetAllDocumentResponseSchema, documentSignFormSchema } from "@digisign/types";
+import {
+  type GetAllDocumentResponseSchema,
+  type GetAllKeyResponseSchema,
+  documentSignWithPassphraseFormSchema,
+} from "@digisign/types";
 
+import { PasswordInput } from "@/components/password-input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { handleError } from "@/lib/error-handler";
 import { parsePemSections, signEddsa, signRsa } from "@/lib/signer";
@@ -17,9 +21,10 @@ import { orpc } from "@/utils/orpc";
 
 interface SignDocumentFormProps {
   documents: GetAllDocumentResponseSchema;
+  keys: GetAllKeyResponseSchema;
 }
 
-export default function DocumentSignForm({ documents }: SignDocumentFormProps) {
+export default function DocumentSignForm({ documents, keys }: SignDocumentFormProps) {
   const navigate = useNavigate();
   const mutation = useMutation(
     orpc.document.sign.mutationOptions({
@@ -51,45 +56,20 @@ export default function DocumentSignForm({ documents }: SignDocumentFormProps) {
   const form = useForm({
     defaultValues: {
       documentId: "",
-      privateKeyFile: null as unknown as File,
+      keyId: "",
+      passphrase: "",
     },
     validators: {
-      onSubmit: documentSignFormSchema,
+      onSubmit: documentSignWithPassphraseFormSchema,
     },
     onSubmit: async ({ value }) => {
       try {
         const selectedDocument = documents.find((doc) => doc.id === value.documentId);
         if (!selectedDocument) throw new Error("Dokumen tidak ditemukan");
-        const documentHash = selectedDocument.hash;
-
-        const privateKeyFile = await value.privateKeyFile.text();
-        const { id: keyId, eddsaKey, rsaKey } = parsePemSections(privateKeyFile);
-
-        const payload = `${value.documentId}|${documentHash}`;
-
-        if (!keyId) throw new Error("Key ID tidak ditemukan");
-        if (!rsaKey || !eddsaKey) throw new Error("Key tidak ditemukan");
-
-        const startSigningTime = performance.now();
-
-        const startEddsaSigningTime = performance.now();
-        const eddsaSignature = signEddsa(payload, eddsaKey);
-        const endEddsaSigningTime = performance.now();
-
-        const startRsaSigningTime = performance.now();
-        const rsaSignature = signRsa(payload, rsaKey);
-        const endRsaSigningTime = performance.now();
-
-        const endSigningTime = performance.now();
-
         mutation.mutate({
           documentId: value.documentId,
-          keyId,
-          rsaPrivateKey: rsaSignature,
-          eddsaPrivateKey: eddsaSignature,
-          signingTime: endSigningTime - startSigningTime,
-          eddsaSigningTime: endEddsaSigningTime - startEddsaSigningTime,
-          rsaSigningTime: endRsaSigningTime - startRsaSigningTime,
+          keyId: value.keyId,
+          passphrase: value.passphrase,
         });
       } catch (error) {
         handleError(error, "Gagal memproses tanda tangan dokumen");
@@ -143,22 +123,53 @@ export default function DocumentSignForm({ documents }: SignDocumentFormProps) {
                 }}
               />
               <form.Field
-                name="privateKeyFile"
+                name="keyId"
                 children={(field) => {
                   const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
                   return (
                     <Field data-invalid={isInvalid}>
-                      <FieldLabel htmlFor={field.name}>File Private Key</FieldLabel>
-                      <Input
-                        accept=".pem,.key"
-                        type="file"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) field.handleChange(file);
+                      <FieldLabel htmlFor={field.name}>Key</FieldLabel>
+                      <Select
+                        name={field.name}
+                        value={field.state.value}
+                        onValueChange={(value) => {
+                          field.handleChange(value ?? "");
                         }}
+                        aria-invalid={isInvalid}
+                      >
+                        <SelectTrigger id={field.name}>
+                          <SelectValue placeholder="Pilih Key">
+                            {keys.find((key) => key.id === field.state.value)?.keyName || "Pilih Key"}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {keys.map((key) => (
+                            <SelectItem key={key.id} value={key.id}>
+                              {key.keyName}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {isInvalid && <FieldError errors={field.state.meta.errors} />}
+                    </Field>
+                  );
+                }}
+              />
+              <form.Field
+                name="passphrase"
+                children={(field) => {
+                  const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+                  return (
+                    <Field data-invalid={isInvalid}>
+                      <FieldLabel htmlFor={field.name}>Passphrase</FieldLabel>
+                      <PasswordInput
                         id={field.name}
                         name={field.name}
+                        value={field.state.value}
+                        onBlur={field.handleBlur}
+                        onChange={(e) => field.handleChange(e.target.value)}
                         aria-invalid={isInvalid}
+                        placeholder="Masukkan passphrase untuk key yang dipilih"
                       />
                       {isInvalid && <FieldError errors={field.state.meta.errors} />}
                     </Field>
