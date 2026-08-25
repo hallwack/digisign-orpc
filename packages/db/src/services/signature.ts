@@ -15,6 +15,7 @@ import { InternalError, NotFoundError, ValidationError } from "../libs/errors";
 import { signEddsa, signRsa } from "../libs/key-libs";
 import { generateId } from "../libs/random";
 import { appendSignature, verifyDocumentSignature, verifyHybridSignature } from "../libs/signature";
+import { measureGroup } from "../libs/signer";
 import { convertToSlug } from "../libs/slug";
 import { documentTable, keyTable, signatureTable, userTable } from "../tables";
 
@@ -112,24 +113,16 @@ export class SignatureService {
     const payload = `${document.id}|${document.hash}`;
 
     // Signing with Private Keys
-
-    const startSigningTime = performance.now();
-
-    const startEddsaSigningTime = performance.now();
-    const eddsaSignature = signEddsa(payload, eddsaPrivateKey);
-    const endEddsaSigningTime = performance.now();
-
-    const startRsaSigningTime = performance.now();
-    const rsaSignature = signRsa(payload, rsaPrivateKey);
-    const endRsaSigningTime = performance.now();
-
-    const endSigningTime = performance.now();
+    const bench = measureGroup({
+      rsa: () => signRsa(payload, rsaPrivateKey),
+      eddsa: () => signEddsa(payload, eddsaPrivateKey),
+    });
 
     const verification = verifyHybridSignature({
       payload,
-      rsaSignatureBase64: rsaSignature,
+      rsaSignatureBase64: bench.rsa.result,
       rsaPublicKeyPem: publicKeyRecord.publicKeyRsa,
-      eddsaSignatureBase64: eddsaSignature,
+      eddsaSignatureBase64: bench.eddsa.result,
       eddsaPublicKeyPem: publicKeyRecord.publicKeyEddsa,
     });
 
@@ -146,8 +139,8 @@ export class SignatureService {
       documentHash: document.hash,
       documentId: document.id,
       keyId: form.keyId,
-      eddsaSignature: form.eddsaPrivateKey,
-      rsaSignature: form.rsaPrivateKey,
+      rsaSignature: bench.rsa.result,
+      eddsaSignature: bench.eddsa.result,
       createdAt: new Date().toISOString(),
     });
 
@@ -157,11 +150,11 @@ export class SignatureService {
       id: generateId(),
       keyId: form.keyId,
       documentId: document.id,
-      rsaSignature: form.rsaPrivateKey,
-      eddsaSignature: form.eddsaPrivateKey,
-      signingDuration: form.signingTime,
-      rsaSigningDuration: form.rsaSigningTime,
-      eddsaSigningDuration: form.eddsaSigningTime,
+      rsaSignature: bench.rsa.result,
+      eddsaSignature: bench.eddsa.result,
+      signingDuration: bench.durationMs,
+      rsaSigningDuration: bench.rsa.durationMs,
+      eddsaSigningDuration: bench.eddsa.durationMs,
       signedAt: new Date(),
     });
     if (!signatureRecord) throw new InternalError("Failed to sign document");

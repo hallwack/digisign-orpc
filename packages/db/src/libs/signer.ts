@@ -81,3 +81,25 @@ export function signEddsa(payload: string, privateKeyPem: string): string {
   const binaryString = String.fromCharCode(...signatureUint8Array);
   return btoa(binaryString);
 }
+
+export function measureGroup<T extends Record<string, () => any>>(tasks: T) {
+  const totalStart = performance.now();
+
+  const results = {} as {
+    [K in keyof T]: { result: ReturnType<T[K]>; durationMs: number };
+  };
+
+  for (const [name, fn] of Object.entries(tasks)) {
+    const start = performance.now();
+    const result = fn();
+    (results as any)[name] = {
+      result,
+      durationMs: performance.now() - start,
+    };
+  }
+
+  return {
+    ...results,
+    durationMs: performance.now() - totalStart,
+  };
+}
