@@ -4,7 +4,7 @@ import { createPaginationSchema, dateQuerySchema, idSchema } from "./utils";
 
 export const passphraseSchema = z
   .string()
-  .min(12, "Passphrase must be at least 12 characters long")
+  .min(8, "Passphrase must be at least 8 characters long")
   .max(128, "Passphrase must be at most 128 characters long");
 
 export const keySchema = z.object({
