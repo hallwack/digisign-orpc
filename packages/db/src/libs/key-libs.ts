@@ -102,11 +102,11 @@ export function parsePemSections(pem: string): PemResult {
   return result;
 }
 
-export function signRsa(hash: string, privateKey: string): string {
+export function signRsa(payload: string, privateKey: string): string {
   return crypto
     .sign(
       "sha256",
-      Buffer.from(hash, "hex"), // hash sudah dalam hex
+      Buffer.from(payload, "utf8"), // hash sudah dalam hex
       {
         key: privateKey,
         padding: crypto.constants.RSA_PKCS1_PADDING,
@@ -115,11 +115,11 @@ export function signRsa(hash: string, privateKey: string): string {
     .toString("base64");
 }
 
-export function signEddsa(hash: string, privateKey: string): string {
+export function signEddsa(payload: string, privateKey: string): string {
   return crypto
     .sign(
       null, // Ed25519 tidak butuh algoritma hash tambahan
-      Buffer.from(hash, "hex"),
+      Buffer.from(payload, "utf8"),
       privateKey,
     )
     .toString("base64");
