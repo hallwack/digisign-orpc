@@ -26,6 +26,7 @@ services:
       - db
     volumes:
       - pgadmin-data:/var/lib/pgadmin
+    restart: unless-stopped
 
 volumes:
   postgres_data:
