@@ -60,6 +60,14 @@ export const OfficeSignature = {
 
     zip.file(CUSTOM_XML_PATH, newCustomXml);
 
+    const visualText = `Dokumen ini ditandatangani secara digital dengan DigiSign\nWaktu: ${new Date().toLocaleString("id-ID")}`;
+
+    if (extension === "docx") {
+      await this.appendVisualSignatureDocx(zip, visualText);
+    } else if (extension === "xlsx") {
+      await this.appendVisualSignatureXlsx(zip, visualText);
+    }
+
     const newFileBuffer = zip.generate({ type: "nodebuffer" });
     await fs.writeFile(join(filePath, fileName), newFileBuffer);
   },
@@ -75,6 +83,95 @@ export const OfficeSignature = {
       $: { fmtid: CUSTOM_PROPERTY_FMTID, pid: id, name: name },
       "vt:lpwstr": [value],
     };
+  },
+
+  async appendVisualSignatureXlsx(zip: PizZip, signatureText: string) {
+    const sheetFiles = Object.keys(zip.files).filter((path) => /^xl\/worksheets\/sheet\d+\.xml$/.test(path));
+
+    const builder = new Builder({
+      headless: true,
+      renderOpts: { pretty: false },
+    });
+
+    const formattedFooter = `&C${signatureText}`;
+
+    for (const sheetPath of sheetFiles) {
+      const sheetXmlStr = zip.files?.[sheetPath]?.asText();
+      if (!sheetXmlStr) continue;
+
+      const sheetObj = await parseStringPromise(sheetXmlStr);
+
+      if (!sheetObj.worksheet.headerFooter) {
+        sheetObj.worksheet.headerFooter = [{}];
+      }
+
+      const hf = sheetObj.worksheet.headerFooter[0];
+
+      if (hf.oddFooter && hf.oddFooter[0]) {
+        const existingText = typeof hf.oddFooter[0] === "string" ? hf.oddFooter[0] : hf.oddFooter[0]._;
+        hf.oddFooter = [`${existingText}\n${formattedFooter}`];
+      } else {
+        hf.oddFooter = [formattedFooter];
+      }
+
+      const newSheetXml = builder.buildObject(sheetObj);
+      zip.file(sheetPath, newSheetXml);
+    }
+  },
+
+  async appendVisualSignatureDocx(zip: PizZip, signatureText: string) {
+    // --- TAHAP 1: Generate ID dan Nama File Footer Baru ---
+    const relsXml = zip.file("word/_rels/document.xml.rels")!.asText();
+
+    // Cari ID unik (misal: rId1, rId2 -> kita cari yang kosong)
+    let counter = 1;
+    while (relsXml.includes(`Id="rId${counter}"`)) {
+      counter++;
+    }
+    const newRelId = `rId${counter}`;
+    const newFooterName = `footerSignature${counter}.xml`;
+
+    // --- TAHAP 2: Buat File Footer XML Baru ---
+    // Kita gunakan template literal karena struktur footer selalu statis
+    const footerXmlContent = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  <w:ftr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+    <w:p>
+      <w:pPr><w:jc w:val="center"/></w:pPr>
+      <w:r>
+        <w:rPr>
+          <w:color w:val="888888"/>
+          <w:sz w:val="20"/> <!-- 20 = 10pt font -->
+        </w:rPr>
+        <w:t>${signatureText}</w:t>
+      </w:r>
+    </w:p>
+  </w:ftr>`;
+
+    zip.file(`word/${newFooterName}`, footerXmlContent);
+
+    // --- TAHAP 3: Daftarkan Footer di document.xml.rels ---
+    const newRelString = `<Relationship Id="${newRelId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="${newFooterName}"/>`;
+    const updatedRelsXml = relsXml.replace("</Relationships>", `  ${newRelString}\n</Relationships>`);
+    zip.file("word/_rels/document.xml.rels", updatedRelsXml);
+
+    // --- TAHAP 4: Daftarkan Content-Type di [Content_Types].xml ---
+    const contentTypesXml = zip.file("[Content_Types].xml")!.asText();
+    const overrideString = `<Override PartName="/word/${newFooterName}" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/>`;
+    const updatedContentTypes = contentTypesXml.replace("</Types>", `  ${overrideString}\n</Types>`);
+    zip.file("[Content_Types].xml", updatedContentTypes);
+
+    // --- TAHAP 5: Hubungkan Footer ke document.xml ---
+    const documentXmlPath = "word/document.xml";
+    let documentXml = zip.file(documentXmlPath)!.asText();
+
+    // Memasukkan referensi footer tepat di dalam tag <w:sectPr> (Section Properties)
+    // Dokumen Word bisa punya banyak section, kita sisipkan ke semua section agar muncul di seluruh halaman
+    const footerRefTag = `<w:footerReference w:type="default" r:id="${newRelId}"/>`;
+
+    // Menggunakan regex untuk menyisipkan referensi footer tepat setelah tag <w:sectPr> dibuka
+    documentXml = documentXml.replace(/(<w:sectPr[^>]*>)/g, `$1${footerRefTag}`);
+
+    zip.file(documentXmlPath, documentXml);
   },
 
   async getExistingCustomXml(zip: PizZip): Promise<CustomXmlStructureSchema> {
@@ -126,14 +223,28 @@ export const OfficeSignature = {
       // 1. Muat file DOCX/XLSX sebagai arsip ZIP
       const zip = new PizZip(fileBuffer);
 
-      // 2. Cari file utama (document.xml untuk DOCX, workbook.xml untuk XLSX)
-      const docContent = zip.file("word/document.xml")?.asText() || zip.file("xl/workbook.xml")?.asText();
-      if (!docContent) {
-        throw new InternalError("Gagal menemukan konten utama dalam file Office (document.xml atau workbook.xml)");
+      const documentXml = zip.file("word/document.xml")?.asText();
+      const workbookXml = zip.file("xl/workbook.xml")?.asText();
+
+      let contentToHash: string;
+
+      if (documentXml) {
+        const textMatches = documentXml.match(/<w:t[^>]*>(.*?)<\/w:t>/gs) ?? [];
+        contentToHash = textMatches.map((match) => match.replace(/<w:t[^>]*>|<\/w:t>/g, "")).join(" ");
+
+        if (!contentToHash) {
+          throw new InternalError("Konten teks utama tidak ditemukan dalam dokumen Word.");
+        }
+      } else if (workbookXml) {
+        contentToHash = workbookXml;
+      } else {
+        throw new InternalError(
+          "Gagal menemukan konten utama untuk dihitung hash. Pastikan file adalah dokumen Word atau Excel yang valid.",
+        );
       }
 
       // 3. Hitung hash SHA-256 dari konten utama
-      return crypto.createHash("sha256").update(docContent).digest("hex");
+      return crypto.createHash("sha256").update(contentToHash).digest("hex");
     } catch (error) {
       if (error instanceof InternalError) throw error;
       throw new InternalError(`Gagal menghitung hash Office asli: ${error}`);

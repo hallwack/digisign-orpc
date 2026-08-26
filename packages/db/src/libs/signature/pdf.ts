@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import { promises as fs } from "node:fs";
 import { join } from "node:path";
-import { PDFArray, PDFDocument, PDFName, PDFRawStream, PDFString } from "pdf-lib";
+import { PDFArray, PDFDocument, PDFName, PDFNumber, PDFRawStream, PDFString } from "pdf-lib";
 import { Builder, parseStringPromise } from "xml2js";
 
 import type { SignatureMetadataSchema } from "@digisign/types";
@@ -45,6 +45,35 @@ export const PdfSignature = {
     const xmlStreamRef = pdfDoc.context.register(xmlStream);
     const catalog = pdfDoc.catalog;
     catalog.set(PDFName.of("Metadata"), xmlStreamRef);
+
+    const context = pdfDoc.context;
+
+    const annotation = context.obj({
+      Type: PDFName.of("Annot"),
+      Subtype: PDFName.of("FreeText"),
+
+      Rect: context.obj([PDFNumber.of(50), PDFNumber.of(50), PDFNumber.of(300), PDFNumber.of(100)]),
+
+      Contents: PDFString.of("Document signed with DigiSign"),
+
+      DA: PDFString.of("/Courier 12 Tf 1 0 0 rg"),
+
+      F: PDFNumber.of(4),
+    });
+
+    const annotationRef = context.register(annotation);
+
+    const pages = pdfDoc.getPages();
+    const lastPage = pages[pages.length - 1];
+
+    let annots = lastPage?.node.get(PDFName.of("Annots"));
+
+    if (!annots) {
+      annots = context.obj([]);
+      lastPage?.node.set(PDFName.of("Annots"), annots);
+    }
+
+    (annots as PDFArray).push(annotationRef);
 
     const modifiedPdf = await pdfDoc.save();
     await fs.writeFile(join(filePath, fileName), modifiedPdf);
