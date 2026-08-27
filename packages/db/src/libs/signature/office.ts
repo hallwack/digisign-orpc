@@ -11,129 +11,19 @@ import { InternalError } from "../errors";
 import { CUSTOM_PROPERTY_FMTID, CUSTOM_XML_PATH, OFFICE_NAMESPACES } from "./constant";
 import { createSignedFileName } from "./utils";
 
-export const OfficeSignature = {
-  async extractMetadata(fileBuffer: Buffer): Promise<Record<string, string> | null> {
-    const zip = new PizZip(fileBuffer);
+const XML_BUILDER_OPTS = {
+  headless: true,
+  renderOpts: { pretty: true },
+  xmldec: { version: "1.0", encoding: "UTF-8" },
+};
 
-    const customXml = await this.getExistingCustomXml(zip);
-    const properties = customXml.Properties.property || [];
+const DOCX_PATHS = {
+  RELS: "word/_rels/document.xml.rels",
+  CONTENT_TYPES: "[Content_Types].xml",
+  DOCUMENT: "word/document.xml",
+};
 
-    const metadata: Record<string, string> = {};
-    for (const prop of properties) {
-      const key = prop.$?.name;
-      const value = prop["vt:lpwstr"]?.[0];
-      if (key && value !== undefined) {
-        metadata[key] = value;
-      }
-    }
-
-    return metadata;
-  },
-
-  async appendMetadata(filePath: string, docName: string, metaData: SignatureMetadataSchema) {
-    const [name, extension] = separateFilenameWithExt(docName);
-    const fileName = createSignedFileName(name!, extension!);
-
-    const fileBuffer = await getDocument(filePath);
-    const zip = new PizZip(fileBuffer);
-
-    const customXml = await this.getExistingCustomXml(zip);
-
-    if (!customXml.Properties.property) customXml.Properties.property = [];
-
-    const existingProperties = customXml.Properties.property || [];
-    let pidStart = this.getNextPid(existingProperties);
-
-    for (const [key, value] of Object.entries(metaData)) {
-      customXml.Properties.property.push(this.createCustomProperty(pidStart++, key, value));
-    }
-
-    const builder = new Builder({
-      headless: true,
-      renderOpts: { pretty: true },
-      xmldec: {
-        version: "1.0",
-        encoding: "UTF-8",
-      },
-    });
-    const newCustomXml = builder.buildObject(customXml);
-
-    zip.file(CUSTOM_XML_PATH, newCustomXml);
-
-    const visualText = `Dokumen ini ditandatangani secara digital dengan DigiSign\nWaktu: ${new Date().toLocaleString("id-ID")}`;
-
-    if (extension === "docx") {
-      await this.appendVisualSignatureDocx(zip, visualText);
-    } else if (extension === "xlsx") {
-      await this.appendVisualSignatureXlsx(zip, visualText);
-    }
-
-    const newFileBuffer = zip.generate({ type: "nodebuffer" });
-    await fs.writeFile(join(filePath, fileName), newFileBuffer);
-  },
-
-  getNextPid(existingProperties: CustomOfficePropertySchema[]): number {
-    if (existingProperties.length === 0) return 2;
-    const maxPid = Math.max(...existingProperties.map((p) => parseInt(p.$.pid.toString())));
-    return maxPid + 1;
-  },
-
-  createCustomProperty(id: number, name: string, value: string): CustomOfficePropertySchema {
-    return {
-      $: { fmtid: CUSTOM_PROPERTY_FMTID, pid: id, name: name },
-      "vt:lpwstr": [value],
-    };
-  },
-
-  async appendVisualSignatureXlsx(zip: PizZip, signatureText: string) {
-    const sheetFiles = Object.keys(zip.files).filter((path) => /^xl\/worksheets\/sheet\d+\.xml$/.test(path));
-
-    const builder = new Builder({
-      headless: true,
-      renderOpts: { pretty: false },
-    });
-
-    const formattedFooter = `&C${signatureText}`;
-
-    for (const sheetPath of sheetFiles) {
-      const sheetXmlStr = zip.files?.[sheetPath]?.asText();
-      if (!sheetXmlStr) continue;
-
-      const sheetObj = await parseStringPromise(sheetXmlStr);
-
-      if (!sheetObj.worksheet.headerFooter) {
-        sheetObj.worksheet.headerFooter = [{}];
-      }
-
-      const hf = sheetObj.worksheet.headerFooter[0];
-
-      if (hf.oddFooter && hf.oddFooter[0]) {
-        const existingText = typeof hf.oddFooter[0] === "string" ? hf.oddFooter[0] : hf.oddFooter[0]._;
-        hf.oddFooter = [`${existingText}\n${formattedFooter}`];
-      } else {
-        hf.oddFooter = [formattedFooter];
-      }
-
-      const newSheetXml = builder.buildObject(sheetObj);
-      zip.file(sheetPath, newSheetXml);
-    }
-  },
-
-  async appendVisualSignatureDocx(zip: PizZip, signatureText: string) {
-    // --- TAHAP 1: Generate ID dan Nama File Footer Baru ---
-    const relsXml = zip.file("word/_rels/document.xml.rels")!.asText();
-
-    // Cari ID unik (misal: rId1, rId2 -> kita cari yang kosong)
-    let counter = 1;
-    while (relsXml.includes(`Id="rId${counter}"`)) {
-      counter++;
-    }
-    const newRelId = `rId${counter}`;
-    const newFooterName = `footerSignature${counter}.xml`;
-
-    // --- TAHAP 2: Buat File Footer XML Baru ---
-    // Kita gunakan template literal karena struktur footer selalu statis
-    const footerXmlContent = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+const getFooterTemplate = (text: string) => `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
   <w:ftr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
     <w:p>
       <w:pPr><w:jc w:val="center"/></w:pPr>
@@ -142,87 +32,193 @@ export const OfficeSignature = {
           <w:color w:val="888888"/>
           <w:sz w:val="20"/> <!-- 20 = 10pt font -->
         </w:rPr>
-        <w:t>${signatureText}</w:t>
+        <w:t>${text}</w:t>
       </w:r>
     </w:p>
   </w:ftr>`;
 
-    zip.file(`word/${newFooterName}`, footerXmlContent);
+async function getExistingCustomXml(zip: PizZip): Promise<CustomXmlStructureSchema> {
+  const defaultStructure: CustomXmlStructureSchema = {
+    Properties: {
+      $: {
+        xmlns: OFFICE_NAMESPACES.CUSTOM_PROPS,
+        "xmlns:vt": OFFICE_NAMESPACES.DOC_PROPS_TYPES,
+      },
+      property: [],
+    },
+  };
 
-    // --- TAHAP 3: Daftarkan Footer di document.xml.rels ---
-    const newRelString = `<Relationship Id="${newRelId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="${newFooterName}"/>`;
-    const updatedRelsXml = relsXml.replace("</Relationships>", `  ${newRelString}\n</Relationships>`);
-    zip.file("word/_rels/document.xml.rels", updatedRelsXml);
+  const customXmlFile = zip.file(CUSTOM_XML_PATH);
+  if (!customXmlFile) return defaultStructure;
 
-    // --- TAHAP 4: Daftarkan Content-Type di [Content_Types].xml ---
-    const contentTypesXml = zip.file("[Content_Types].xml")!.asText();
-    const overrideString = `<Override PartName="/word/${newFooterName}" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/>`;
-    const updatedContentTypes = contentTypesXml.replace("</Types>", `  ${overrideString}\n</Types>`);
-    zip.file("[Content_Types].xml", updatedContentTypes);
+  try {
+    const xmlContent = customXmlFile.asText();
+    const parsedXml = await parseStringPromise(xmlContent);
 
-    // --- TAHAP 5: Hubungkan Footer ke document.xml ---
-    const documentXmlPath = "word/document.xml";
-    let documentXml = zip.file(documentXmlPath)!.asText();
+    // Ensure the structure is valid
+    if (!parsedXml?.Properties) {
+      return defaultStructure;
+    }
 
-    // Memasukkan referensi footer tepat di dalam tag <w:sectPr> (Section Properties)
-    // Dokumen Word bisa punya banyak section, kita sisipkan ke semua section agar muncul di seluruh halaman
-    const footerRefTag = `<w:footerReference w:type="default" r:id="${newRelId}"/>`;
+    // Ensure property array is exists and is an array
+    if (!parsedXml.Properties.property) {
+      parsedXml.Properties.property = [];
+    } else if (!Array.isArray(parsedXml.Properties.property)) {
+      parsedXml.Properties.property = [parsedXml.Properties.property];
+    }
 
-    // Menggunakan regex untuk menyisipkan referensi footer tepat setelah tag <w:sectPr> dibuka
-    documentXml = documentXml.replace(/(<w:sectPr[^>]*>)/g, `$1${footerRefTag}`);
+    // Ensure the namespace attributes exist
+    if (!parsedXml.Properties.$) {
+      parsedXml.Properties.$ = defaultStructure.Properties.$;
+    }
 
-    zip.file(documentXmlPath, documentXml);
+    return parsedXml as CustomXmlStructureSchema;
+  } catch (error) {
+    console.warn(`Failed to parse existing custom.xml, using default structure: ${error}`);
+    return defaultStructure;
+  }
+}
+
+function getNextPid(existingProperties: CustomOfficePropertySchema[]): number {
+  if (existingProperties.length === 0) return 2;
+  const maxPid = Math.max(...existingProperties.map((p) => parseInt(p.$.pid.toString())));
+  return maxPid + 1;
+}
+
+function createCustomProperty(id: number, name: string, value: string): CustomOfficePropertySchema {
+  return {
+    $: { fmtid: CUSTOM_PROPERTY_FMTID, pid: id, name: name },
+    "vt:lpwstr": [value],
+  };
+}
+
+// Visual Signature DOCX
+
+function generateDocxFooterId(zip: PizZip): { relId: string; fileName: string } {
+  const relsXml = zip.file(DOCX_PATHS.RELS)!.asText();
+  let counter = 1;
+  while (relsXml.includes(`Id="rId${counter}"`)) counter++;
+
+  return {
+    relId: `rId${counter}`,
+    fileName: `footerSignature${counter}.xml`,
+  };
+}
+
+function registerDocxFooter(zip: PizZip, relId: string, fileName: string) {
+  // Register in document.xml.rels
+  const relsXml = zip.file(DOCX_PATHS.RELS)!.asText();
+  const relString = `<Relationship Id="${relId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="${fileName}"/>`;
+  zip.file(DOCX_PATHS.RELS, relsXml.replace("</Relationships>", `  ${relString}\n</Relationships>`));
+
+  // Register in [Content_Types].xml
+  const contentTypesXml = zip.file(DOCX_PATHS.CONTENT_TYPES)!.asText();
+  const overrideString = `<Override PartName="/word/${fileName}" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.footer+xml"/>`;
+  zip.file(DOCX_PATHS.CONTENT_TYPES, contentTypesXml.replace("</Types>", `  ${overrideString}\n</Types>`));
+}
+
+function attachDocxFooterToSections(zip: PizZip, relId: string) {
+  const documentXml = zip.file(DOCX_PATHS.DOCUMENT)!.asText();
+  const footerRefTag = `<w:footerReference w:type="default" r:id="${relId}"/>`;
+
+  // Insert footer reference inside every <w:sectPr> (Section Properties)
+  const updatedDocumentXml = documentXml.replace(/(<w:sectPr[^>]*>)/g, `$1${footerRefTag}`);
+  zip.file(DOCX_PATHS.DOCUMENT, updatedDocumentXml);
+}
+
+async function appendVisualSignatureDocx(zip: PizZip, signatureText: string) {
+  const { relId, fileName } = generateDocxFooterId(zip);
+
+  zip.file(`word/${fileName}`, getFooterTemplate(signatureText));
+  registerDocxFooter(zip, relId, fileName);
+  attachDocxFooterToSections(zip, relId);
+}
+
+// Visual Signature XLSX
+
+async function appendVisualSignatureXlsx(zip: PizZip, signatureText: string) {
+  const sheetFiles = Object.keys(zip.files).filter((path) => /^xl\/worksheets\/sheet\d+\.xml$/.test(path));
+  const builder = new Builder({ headless: true, renderOpts: { pretty: false } });
+  const formattedFooter = `&C${signatureText}`;
+
+  for (const sheetPath of sheetFiles) {
+    const sheetXmlStr = zip.files?.[sheetPath]?.asText();
+    if (!sheetXmlStr) continue;
+
+    const sheetObj = await parseStringPromise(sheetXmlStr);
+
+    // Ensure headerFooter structure exists
+    sheetObj.worksheet.headerFooter = sheetObj.worksheet.headerFooter || [{}];
+    const hf = sheetObj.worksheet.headerFooter[0];
+
+    // Append or create oddFooter
+    if (hf.oddFooter?.[0]) {
+      const existingText = typeof hf.oddFooter[0] === "string" ? hf.oddFooter[0] : hf.oddFooter[0]._;
+      hf.oddFooter = [`${existingText}\n${formattedFooter}`];
+    } else {
+      hf.oddFooter = [formattedFooter];
+    }
+
+    zip.file(sheetPath, builder.buildObject(sheetObj));
+  }
+}
+
+export const OfficeSignature = {
+  async extractMetadata(fileBuffer: Buffer): Promise<Record<string, string> | null> {
+    const zip = new PizZip(fileBuffer);
+    const customXml = await getExistingCustomXml(zip);
+    const properties = customXml.Properties.property || [];
+
+    return properties.reduce(
+      (acc, prop) => {
+        const key = prop.$?.name;
+        const value = prop["vt:lpwstr"]?.[0];
+        if (key && value !== undefined) acc[key] = value;
+        return acc;
+      },
+      {} as Record<string, string>,
+    );
   },
 
-  async getExistingCustomXml(zip: PizZip): Promise<CustomXmlStructureSchema> {
-    const defaultStructure: CustomXmlStructureSchema = {
-      Properties: {
-        $: {
-          xmlns: OFFICE_NAMESPACES.CUSTOM_PROPS,
-          "xmlns:vt": OFFICE_NAMESPACES.DOC_PROPS_TYPES,
-        },
-        property: [],
-      },
-    };
+  async appendMetadata(filePath: string, docName: string, metaData: SignatureMetadataSchema) {
+    const [name, extension] = separateFilenameWithExt(docName);
+    const fileName = createSignedFileName(name!, extension!);
+    const fileBuffer = await getDocument(filePath);
+    const zip = new PizZip(fileBuffer);
 
-    const customXmlFile = zip.file(CUSTOM_XML_PATH);
-    if (!customXmlFile) {
-      return defaultStructure;
+    // 1. Append Custom Properties
+    const customXml = await getExistingCustomXml(zip);
+    if (!customXml.Properties.property) customXml.Properties.property = [];
+    const existingProperties = customXml.Properties.property || [];
+
+    let pidStart = getNextPid(existingProperties);
+
+    for (const [key, value] of Object.entries(metaData)) {
+      customXml.Properties.property.push(createCustomProperty(pidStart++, key, value));
     }
 
-    try {
-      const xmlContent = customXmlFile.asText();
-      const parsedXml = await parseStringPromise(xmlContent);
+    const builder = new Builder(XML_BUILDER_OPTS);
+    const newCustomXml = builder.buildObject(customXml);
+    zip.file(CUSTOM_XML_PATH, newCustomXml);
 
-      // Ensure the structure is valid
-      if (!parsedXml?.Properties) {
-        return defaultStructure;
-      }
+    // 2. Append Visual Signature
+    const visualText = `Dokumen ini ditandatangani secara digital dengan DigiSign\nWaktu: ${new Date().toLocaleString("id-ID")}`;
 
-      // Ensure property array is exists and is an array
-      if (!parsedXml.Properties.property) {
-        parsedXml.Properties.property = [];
-      } else if (!Array.isArray(parsedXml.Properties.property)) {
-        parsedXml.Properties.property = [parsedXml.Properties.property];
-      }
-
-      // Ensure the namespace attributes exist
-      if (!parsedXml.Properties.$) {
-        parsedXml.Properties.$ = defaultStructure.Properties.$;
-      }
-
-      return parsedXml as CustomXmlStructureSchema;
-    } catch (error) {
-      console.warn(`Failed to parse existing custom.xml, using default structure: ${error}`);
-      return defaultStructure;
+    if (extension === "docx") {
+      await appendVisualSignatureDocx(zip, visualText);
+    } else if (extension === "xlsx") {
+      await appendVisualSignatureXlsx(zip, visualText);
     }
+
+    // 3. Save File
+    const newFileBuffer = zip.generate({ type: "nodebuffer" });
+    await fs.writeFile(join(filePath, fileName), newFileBuffer);
   },
 
   async calculateOriginalHash(fileBuffer: Buffer): Promise<string> {
     try {
       // 1. Muat file DOCX/XLSX sebagai arsip ZIP
       const zip = new PizZip(fileBuffer);
-
       const documentXml = zip.file("word/document.xml")?.asText();
       const workbookXml = zip.file("xl/workbook.xml")?.asText();
 
@@ -231,10 +227,7 @@ export const OfficeSignature = {
       if (documentXml) {
         const textMatches = documentXml.match(/<w:t[^>]*>(.*?)<\/w:t>/gs) ?? [];
         contentToHash = textMatches.map((match) => match.replace(/<w:t[^>]*>|<\/w:t>/g, "")).join(" ");
-
-        if (!contentToHash) {
-          throw new InternalError("Konten teks utama tidak ditemukan dalam dokumen Word.");
-        }
+        if (!contentToHash) throw new InternalError("Konten teks utama tidak ditemukan dalam dokumen Word.");
       } else if (workbookXml) {
         contentToHash = workbookXml;
       } else {
