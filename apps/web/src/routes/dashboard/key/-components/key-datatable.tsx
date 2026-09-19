@@ -54,8 +54,8 @@ export default function KeyDataTable() {
 
       <KeyRegenerateAlertDialog
         id={regenerateKeyId}
-        onOpenChange={() => {
-          setRegenerateKeyId(null);
+        onOpenChangeComplete={(open) => {
+          if (!open) setRegenerateKeyId(null);
         }}
         open={!!regenerateKeyId}
       />

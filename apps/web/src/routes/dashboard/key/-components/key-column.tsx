@@ -72,7 +72,7 @@ export function useKeyColumns({ onDeleteKey, onRegenerateKey }: UseKeyColumnsPro
               />
               <DropdownMenuContent align="end">
                 <DropdownMenuGroup>
-                  <DropdownMenuItem className="cursor-pointer" onClick={() => onRegenerateKey?.(url)}>
+                  <DropdownMenuItem className="cursor-pointer" onClick={() => onRegenerateKey?.(row.original.id)}>
                     <KeyIcon className="mr-2 h-4 w-4" />
                     Generate Ulang Key
                   </DropdownMenuItem>
