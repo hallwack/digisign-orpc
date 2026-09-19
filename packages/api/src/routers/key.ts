@@ -50,7 +50,7 @@ export const keyRouter = {
     })
     .input(keyRegenerateSchema)
     .handler(async ({ input, context }) => {
-      return KeyService.regenerateKey(input.id, context.session.user.id);
+      return KeyService.regenerateKey(input.id, input.passphrase, context.session.user.id);
     }),
   delete: protectedProcedure
     .route({
