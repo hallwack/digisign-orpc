@@ -41,20 +41,28 @@ function injectXmpMetadata(pdfDoc: PDFDocument, metadataXml: string) {
 
 function addVisualSignatureAnnotation(pdfDoc: PDFDocument, text: string) {
   const context = pdfDoc.context;
-  const annotation = context.obj({
-    Type: PDFName.of("Annot"),
-    Subtype: PDFName.of("FreeText"),
-    Rect: context.obj([PDFNumber.of(50), PDFNumber.of(50), PDFNumber.of(300), PDFNumber.of(100)]),
-    Contents: PDFString.of(text),
-    DA: PDFString.of("/Courier 12 Tf 1 0 0 rg"),
-    F: PDFNumber.of(4),
-  });
-
-  const annotationRef = context.register(annotation);
   const pages = pdfDoc.getPages();
   const lastPage = pages[pages.length - 1];
 
   if (!lastPage) return;
+
+  const { width } = lastPage.getSize();
+  const annotation = context.obj({
+    Type: PDFName.of("Annot"),
+    Subtype: PDFName.of("FreeText"),
+    Rect: context.obj([PDFNumber.of(50), PDFNumber.of(20), PDFNumber.of(width - 50), PDFNumber.of(40)]),
+    Contents: PDFString.of(text),
+    DA: PDFString.of("/Courier 12 Tf 0 0 0 rg"),
+    Border: context.obj([PDFNumber.of(0), PDFNumber.of(0), PDFNumber.of(0)]),
+    BS: context.obj({
+      Type: PDFName.of("Border"),
+      W: PDFNumber.of(0),
+    }),
+    IT: PDFName.of("FreeTextTypeWriter"),
+    F: PDFNumber.of(4),
+  });
+
+  const annotationRef = context.register(annotation);
 
   let annots = lastPage.node.get(PDFName.of("Annots"));
   if (!annots) {
