@@ -5,7 +5,7 @@ import type { KeyDataTableRequestSchema, KeyDataTableResponseSchema, SignatureMe
 import { db } from "..";
 import { registerKeyPair } from "../libs/crypto-envelope/register";
 import { InternalError, NotFoundError, ValidationError } from "../libs/errors";
-import { combinedKeys, generateKeys, verifyEddsa, verifyRsa } from "../libs/key-libs";
+import { verifyEddsa, verifyRsa } from "../libs/key-libs";
 import { lowerSql } from "../libs/parse";
 import { generateId } from "../libs/random";
 import { parseSlug } from "../libs/slug";
@@ -136,7 +136,7 @@ export class KeyService {
     return { id, keyName, publicKeyRsa, publicKeyEddsa };
   }
 
-  static async regenerateKey(keyId: string, userId: string) {
+  static async regenerateKey(keyId: string, passphrase: string, userId: string) {
     const existingKey = await db.query.keyTable.findFirst({
       where: (keyTable, { and, eq }) => and(eq(keyTable.id, keyId), eq(keyTable.userId, userId)),
     });
@@ -144,27 +144,37 @@ export class KeyService {
 
     await db.update(keyTable).set({ revokedAt: new Date() }).where(eq(keyTable.id, keyId));
 
-    const { publicKeyRsa, privateKeyRsa, publicKeyEddsa, privateKeyEddsa } = generateKeys();
+    const { publicKeyRsa, encryptedRsa, publicKeyEddsa, encryptedEddsa, kdfParams } = await registerKeyPair({
+      passphrase,
+    });
+
     const id = generateId();
 
-    const key = await db.insert(keyTable).values({
-      id,
-      userId,
-      keyName: existingKey.keyName,
-      publicKeyRsa,
-      publicKeyEddsa,
+    await db.transaction(async (tx) => {
+      await tx.insert(keyTable).values({
+        id,
+        keyName: existingKey.keyName,
+        publicKeyRsa,
+        publicKeyEddsa,
+        userId,
+      });
+
+      await tx.insert(keyEncryptionMaterialTable).values({
+        keyId: id,
+        encryptedPrivateKeyRsa: encryptedRsa.ciphertext,
+        privateKeyRsaNonce: encryptedRsa.nonce,
+        privateKeyRsaAuthTag: encryptedRsa.authTag,
+        encryptedPrivateKeyEddsa: encryptedEddsa.ciphertext,
+        privateKeyEddsaNonce: encryptedEddsa.nonce,
+        privateKeyEddsaAuthTag: encryptedEddsa.authTag,
+        kdfSalt: kdfParams.kdfSalt,
+        kdfMemoryCost: kdfParams.kdfMemoryCost,
+        kdfTimeCost: kdfParams.kdfTimeCost,
+        kdfParallelism: kdfParams.kdfParallelism,
+      });
     });
-    if (!key) throw new InternalError("Failed to create key");
 
-    const sanitizedKeyName = existingKey!.keyName.replace(/\s+/g, "-");
-    const fileName = `${sanitizedKeyName}-private-keys.pem`;
-    const combinedPrivateKey = combinedKeys(id, privateKeyRsa, privateKeyEddsa);
-
-    return {
-      fileData: Buffer.from(combinedPrivateKey).toString("base64"),
-      fileName,
-      mimeType: "application/x-pem-file",
-    };
+    return { id, keyName: existingKey.keyName, publicKeyRsa, publicKeyEddsa };
   }
 
   static async deleteKey(params: string) {
