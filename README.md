@@ -76,8 +76,6 @@ Setiap dokumen akan memiliki:
 Sistem menggunakan kombinasi dua algoritma digital signature:
 
 ```
-
-```
               Document
                  |
                  |
@@ -89,16 +87,13 @@ Sistem menggunakan kombinasi dua algoritma digital signature:
     |                          |
    RSA                        EdDSA
     |                          |
-```
-
 RSA Signature              EdDSA Signature
-|                          |
-+------------+-------------+
-|
-Hybrid Signature
-|
-Document Metadata
-
+    |                          |
+    +------------+-------------+
+                 |
+          Hybrid Signature
+                 |
+        Document Metadata
 ```
 
 ---
@@ -112,30 +107,24 @@ Proses penandatanganan dokumen:
 3. Sistem menghasilkan:
 
 ```
-
 document_hash = SHA3-256(document_content)
-
 ```
 
 4. Sistem membentuk payload unik:
 
 ```
-
 payload = document_id + "|" + document_hash
-
 ```
 
 5. User memberikan private key.
 6. Sistem menghasilkan:
 
 ```
-
 rsa_signature =
 sign(payload, rsa_private_key)
 
 eddsa_signature =
 sign(payload, eddsa_private_key)
-
 ```
 
 7. Signature disimpan:
@@ -150,30 +139,28 @@ sign(payload, eddsa_private_key)
 Ketika dokumen diverifikasi:
 
 ```
-
 Uploaded Document
-|
-|
+       |
+       |
 Extract Content
-|
-|
+       |
+       |
 Generate Current Hash
-|
-|
+       |
+       |
 Compare Hash
-|
-|
+       |
+       |
 Verify RSA Signature
-|
-|
+       |
+       |
 Verify EdDSA Signature
-|
-|
+       |
+       |
 Check Key Revocation Status
-|
-|
+       |
+       |
 Verification Result
-
 ```
 
 Validasi dilakukan melalui beberapa tahap:
@@ -183,17 +170,13 @@ Validasi dilakukan melalui beberapa tahap:
 Sistem menghitung ulang hash dokumen:
 
 ```
-
 hash_current = SHA3-256(current_document_content)
-
 ```
 
 Kemudian membandingkan:
 
 ```
-
 document_hash == hash_current
-
 ```
 
 Jika berbeda, dokumen dianggap telah mengalami perubahan.
@@ -205,7 +188,6 @@ Jika berbeda, dokumen dianggap telah mengalami perubahan.
 Sistem melakukan verifikasi:
 
 ```
-
 rsa_verify(
 payload,
 rsa_signature,
@@ -217,7 +199,6 @@ payload,
 eddsa_signature,
 eddsa_public_key
 )
-
 ```
 
 ---
@@ -227,25 +208,19 @@ eddsa_public_key
 Sistem melakukan pengecekan:
 
 ```
-
 signed_at < revoked_at
-
 ```
 
 Jika dokumen ditandatangani setelah key dicabut:
 
 ```
-
 INVALID
-
 ```
 
 Jika dokumen ditandatangani sebelum pencabutan:
 
 ```
-
 VALID WITH WARNING
-
 ```
 
 ---
@@ -269,9 +244,7 @@ Keuntungan:
 Sistem mencegah penggunaan ulang signature pada dokumen berbeda dengan mengikat signature terhadap:
 
 ```
-
 document_id + document_hash
-
 ```
 
 Sehingga signature hanya valid untuk satu dokumen tertentu.
@@ -336,7 +309,6 @@ Signature disimpan pada metadata dokumen sehingga:
 # Project Structure
 
 ```
-
 .
 ├── apps
 │
@@ -363,7 +335,6 @@ Signature disimpan pada metadata dokumen sehingga:
 ├── turbo.json
 ├── package.json
 └── README.md
-
 ```
 
 ---
@@ -377,13 +348,11 @@ Entity utama:
 Menyimpan data pengguna.
 
 ```
-
 users
 |
 |-- id
 |-- name
 |-- email
-
 ```
 
 ---
@@ -393,7 +362,6 @@ users
 Menyimpan public key pengguna.
 
 ```
-
 keys
 |
 |-- id
@@ -401,7 +369,6 @@ keys
 |-- rsa_public_key
 |-- eddsa_public_key
 |-- revoked_at
-
 ```
 
 Private key tidak disimpan.
@@ -413,7 +380,6 @@ Private key tidak disimpan.
 Menyimpan informasi dokumen.
 
 ```
-
 documents
 |
 |-- id
@@ -421,7 +387,6 @@ documents
 |-- filename
 |-- document_hash
 |-- deleted_at
-
 ```
 
 ---
@@ -431,7 +396,6 @@ documents
 Menyimpan histori signature.
 
 ```
-
 signatures
 |
 |-- document_id
@@ -439,7 +403,6 @@ signatures
 |-- rsa_signature
 |-- eddsa_signature
 |-- signed_at
-
 ````
 
 ---
